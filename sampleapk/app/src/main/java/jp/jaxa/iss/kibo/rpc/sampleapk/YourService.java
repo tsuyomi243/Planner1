@@ -69,6 +69,9 @@ public class YourService extends KiboRpcService {
         /* ******************************************** */
         // send mission completion
         api.reportMissionCompletion();
+
+        saveMatImage(image1,image1);
+        saveMatImage(image2,image2);
     }
     @Override
     protected void runPlan2(){
