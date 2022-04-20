@@ -14,10 +14,10 @@ public class YourService extends KiboRpcService {
         // set Waypoint value
         // Write Position and Quaternion here.
         // Waypoint(pos_x,pos_y,pos_z,qua_x,qua_y,qua_z,qua_w)
-        Waypoint wp1 = new Waypoint(10.71, -7.70, 4.48, 0, 0.707, 0, 0.707);    // Point1
+        Waypoint wp1 = new Waypoint(10.71, -7.77, 4.48, 0, 0.707, 0, 0.707);    // Point1
         Waypoint wp2 = new Waypoint(11.30, -8, 4.55, 0, 0, -0.707, 0.707);      // wp1_From1to2_2
         Waypoint wp3 = new Waypoint(11.30, -9.92, 4.55, 0, 0, -0.707, 0.707);   // wp2_From1to2_2
-        Waypoint wp4 = new Waypoint(11.30, -9.92, 5.29, 0, 0, -0.707, 0.707);   // Point2_1
+        Waypoint wp4 = new Waypoint(11.22, -9.92, 5.48, 0, 0, -0.707, 0.707);   // Point2_1
         Waypoint wp5 = new Waypoint(11.30, -9.92, 4.55, 0, 0, -0.707, 0.707);   // wp1_From2toG
         Waypoint wp6 = new Waypoint(11.30, -8.0, 4.55, 0, 0, -0.707, 0.707);   // wp3_From2toG
         Waypoint wp7 = new Waypoint(11.27, -7.89, 4.96, 0, 0, -0.707, 0.707);  // PointGoal_1
