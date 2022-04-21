@@ -45,6 +45,8 @@ public class YourService extends KiboRpcService {
         MoveToWaypoint(wp1);
         // report point1 arrival
         api.reportPoint1Arrival();
+        // irradiate the laser
+        api.laserControl(true);
         // get a camera image
         Mat image1 = api.getMatNavCam();
         //読み取った画像からマーカを認識
@@ -55,9 +57,6 @@ public class YourService extends KiboRpcService {
         api.saveMatImage(image1, "image 1");
         //試しに出力
         Print_AR(corners, markerIds);
-
-        // irradiate the laser
-        api.laserControl(true);
         // take target1 snapshots
         api.takeTarget1Snapshot();
         // turn the laser off
