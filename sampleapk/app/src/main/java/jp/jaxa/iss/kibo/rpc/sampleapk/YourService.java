@@ -45,7 +45,7 @@ public class YourService extends KiboRpcService {
         api.reportPoint1Arrival();
         // get a camera image
         Mat image1 = api.getMatNavCam();
-        //読み取った画像からマーカの座標を返す
+        //読み取った画像からマーカを認識
         List<Mat> corners = new ArrayList<>();
         Mat markerIds = new Mat();
         Aruco.detectMarkers(image1, dictionary, corners, markerIds);
