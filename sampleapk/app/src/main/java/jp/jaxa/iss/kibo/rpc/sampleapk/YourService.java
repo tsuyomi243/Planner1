@@ -1,13 +1,24 @@
         package jp.jaxa.iss.kibo.rpc.sampleapk;
+        import android.util.Log;
+
         import jp.jaxa.iss.kibo.rpc.api.KiboRpcService;
         import gov.nasa.arc.astrobee.Result;
         import gov.nasa.arc.astrobee.types.Point;
         import gov.nasa.arc.astrobee.types.Quaternion;
+
+        import org.opencv.aruco.Aruco;
+        import org.opencv.aruco.Dictionary;
         import org.opencv.core.Mat;
-/**
+
+        import java.util.ArrayList;
+        import java.util.List;
+
+        /**
  * Class meant to handle commands from the Ground Data System and execute them in Astrobee
  */
 public class YourService extends KiboRpcService {
+    private final String TAG = this.getClass().getSimpleName();
+
     @Override
     protected void runPlan1(){
 
@@ -22,7 +33,11 @@ public class YourService extends KiboRpcService {
         Waypoint wp6 = new Waypoint(11.30, -8.0, 4.55, 0, 0, -0.707, 0.707);   // wp3_From2toG
         Waypoint wp7 = new Waypoint(11.27, -7.89, 4.96, 0, 0, -0.707, 0.707);  // PointGoal_1
 
-        // the mission starts
+        //マーカの設定
+        Dictionary dictionary = Aruco.getPredefinedDictionary(Aruco.DICT_5X5_250);
+        //ログを取るため
+        Log.i(TAG, "start mission");
+        /* the mission starts */
         api.startMission();
         // move to a point Point1
         MoveToWaypoint(wp1);
@@ -30,6 +45,13 @@ public class YourService extends KiboRpcService {
         api.reportPoint1Arrival();
         // get a camera image
         Mat image1 = api.getMatNavCam();
+        //読み取った画像からマーカの座標を返す
+        List<Mat> corners = new ArrayList<>();
+        Mat markerIds = new Mat();
+        Aruco.detectMarkers(image1, dictionary, corners, markerIds);
+        Aruco.drawDetectedMarkers(image1, corners, markerIds);
+        api.saveMatImage(image1, "image 1");
+        //
         // irradiate the laser
         api.laserControl(true);
         // take target1 snapshots
@@ -100,4 +122,6 @@ public class YourService extends KiboRpcService {
         moveToWrapper(name.posX, name.posY, name.posZ, name.quaX, name.quaY, name.quaZ, name.quaW);
     }
 
-}
+
+    }
+
