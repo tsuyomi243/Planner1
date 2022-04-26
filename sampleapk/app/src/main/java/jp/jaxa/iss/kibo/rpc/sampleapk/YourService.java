@@ -58,6 +58,8 @@ public class YourService extends KiboRpcService {
         Aruco.detectMarkers(image1, dictionary, corners, markerIds);
         Aruco.drawDetectedMarkers(image1, corners, markerIds);
         api.saveMatImage(image1, "image 1");
+        
+
         //試しに出力
         Print_AR(corners, markerIds);
 
@@ -99,7 +101,6 @@ public class YourService extends KiboRpcService {
         // send mission completion
         api.reportMissionCompletion();
 
-        api.saveMatImage(image1,"image1");
         api.saveMatImage(image2,"image2");
     }
     @Override
@@ -128,7 +129,7 @@ public class YourService extends KiboRpcService {
         api.relativeMoveTo(point, quaternion, true);
     }
 
-    
+
     private void MoveToWaypoint(Waypoint name){
 
         Result result;
@@ -149,12 +150,12 @@ public class YourService extends KiboRpcService {
     }
 
     private void Print_AR(List<Mat> corners, Mat markerIds) {
-        for (int i = 0; i < 4; i++) {
-            Log.i(TAG, "markerIds:" + markerIds.get(0, 0)[i]);
-            Log.i(TAG, "左上:" + Arrays.toString(corners.get(i).get(0, 0)));
-            Log.i(TAG, "右上:" + Arrays.toString(corners.get(i).get(0, 1)));
-            Log.i(TAG, "右下:" + Arrays.toString(corners.get(i).get(0, 2)));
-            Log.i(TAG, "左下:" + Arrays.toString(corners.get(i).get(0, 3)));
+        for (int n = 0; n < 4; n++) {
+            Log.i(TAG, "markerIds:" + markerIds.get(n,0));
+            Log.i(TAG, "左上:" + Arrays.toString(corners.get(n).get(0, 0)));
+            Log.i(TAG, "右上:" + Arrays.toString(corners.get(n).get(0, 1)));
+            Log.i(TAG, "右下:" + Arrays.toString(corners.get(n).get(0, 2)));
+            Log.i(TAG, "左下:" + Arrays.toString(corners.get(n).get(0, 3)));
         }
     }
 
