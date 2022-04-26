@@ -1,4 +1,7 @@
         package jp.jaxa.iss.kibo.rpc.sampleapk;
+
+        import android.util.Log;
+
         import jp.jaxa.iss.kibo.rpc.api.KiboRpcService;
         import gov.nasa.arc.astrobee.Result;
         import gov.nasa.arc.astrobee.types.Point;
@@ -48,8 +51,7 @@ public class YourService extends KiboRpcService {
         // irradiate the laser
         api.laserControl(true);
 
-        // get a camera image
-        Mat image1 = api.getMatNavCam();
+
         //読み取った画像からマーカを認識
         List<Mat> corners = new ArrayList<>();
         Mat markerIds = new Mat();
@@ -97,8 +99,8 @@ public class YourService extends KiboRpcService {
         // send mission completion
         api.reportMissionCompletion();
 
-        saveMatImage(image1,image1);
-        saveMatImage(image2,image2);
+        api.saveMatImage(image1,"image1");
+        api.saveMatImage(image2,"image2");
     }
     @Override
     protected void runPlan2(){
@@ -126,8 +128,34 @@ public class YourService extends KiboRpcService {
         api.relativeMoveTo(point, quaternion, true);
     }
 
+    
     private void MoveToWaypoint(Waypoint name){
-        moveToWrapper(name.posX, name.posY, name.posZ, name.quaX, name.quaY, name.quaZ, name.quaW);
+
+        Result result;
+        final int LOOP_MAX = 3;
+
+        final Point point = new Point(name.posX, name.posY, name.posZ);
+        final Quaternion quaternion = new Quaternion((float)name.quaX, (float)name.quaY,
+                (float)name.quaZ, (float)name.quaW);
+
+        result = api.moveTo(point, quaternion, true);
+
+        int loopCount = 0;
+        while(!result.hasSucceeded() && loopCount < LOOP_MAX){
+            // Retry
+            result = api.moveTo(point, quaternion, true);
+            ++loopCount;
+        }
+    }
+
+    private void Print_AR(List<Mat> corners, Mat markerIds) {
+        for (int i = 0; i < 4; i++) {
+            Log.i(TAG, "markerIds:" + markerIds.get(0, 0)[i]);
+            Log.i(TAG, "左上:" + Arrays.toString(corners.get(i).get(0, 0)));
+            Log.i(TAG, "右上:" + Arrays.toString(corners.get(i).get(0, 1)));
+            Log.i(TAG, "右下:" + Arrays.toString(corners.get(i).get(0, 2)));
+            Log.i(TAG, "左下:" + Arrays.toString(corners.get(i).get(0, 3)));
+        }
     }
 
 }
