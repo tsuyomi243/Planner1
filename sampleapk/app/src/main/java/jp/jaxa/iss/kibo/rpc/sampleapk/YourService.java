@@ -126,15 +126,22 @@ public class YourService extends KiboRpcService {
     }
 
     private void Print_AR(List<Mat> corners, Mat markerIds){
-        for(int i=0; i<4; i++){
-            Log.i(TAG,"markerIds:"+ markerIds.get(0,0)[i]);
+        for(int id=0; id<4; id++){
+                    Log.i(TAG,"markerIds:"+ Arrays.toString(markerIds.get(id,0)));
+                    Log.i(TAG,"左上:"+ Arrays.toString(corners.get(id).get(0, 0)));
+                    Log.i(TAG,"右上:"+ Arrays.toString(corners.get(id).get(0, 1)));
+                    Log.i(TAG,"右下:"+ Arrays.toString(corners.get(id).get(0, 2)));
+                    Log.i(TAG,"左下:"+ Arrays.toString(corners.get(id).get(0, 3)));
+                }
+            }
+            /*
+            Log.i(TAG,"markerIds:"+ markerIds.get(0,j)[0]);
             Log.i(TAG,"左上:"+ Arrays.toString(corners.get(i).get(0, 0)));
             Log.i(TAG,"右上:"+ Arrays.toString(corners.get(i).get(0, 1)));
             Log.i(TAG,"右下:"+ Arrays.toString(corners.get(i).get(0, 2)));
             Log.i(TAG,"左下:"+ Arrays.toString(corners.get(i).get(0, 3)));
-        }
+            */
 
 
-    }
 }
 
