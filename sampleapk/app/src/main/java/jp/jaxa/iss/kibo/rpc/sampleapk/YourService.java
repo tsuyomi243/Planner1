@@ -30,7 +30,7 @@ public class YourService extends KiboRpcService {
         // Waypoint(pos_x, pos_y, pos_z, qua_x, qua_y, qua_z, qua_w, avoidX, avoidY, avoidZ)
         //X : right,left Y : back, front Z : down,up
         Waypoint wp1 = new Waypoint(10.71, -7.77, 4.48,
-                                    0, 0.707, 0, 0.707, 0.707,
+                                    0, 0.707, 0, 0.707,
                                     0, 0, 0.05);    // Point1
         Waypoint wp2 = new Waypoint(11.30, -8, 4.55,
                                     0, 0, -0.707, 0.707,
@@ -38,7 +38,7 @@ public class YourService extends KiboRpcService {
         Waypoint wp3 = new Waypoint(11.30, -9.92, 4.55,
                                     0, 0, -0.707, 0.707,
                                     0, 0, -0.05);   // wp2_From1to2_2
-        Waypoint wp4 = new Waypoint(11.22, -9.92, 5.48,
+        Waypoint wp4 = new Waypoint(11.204, -9.92, 5.47,
                                     0, 0, -0.707, 0.707,
                                     0, 0, -0.01);   // Point2_1
         Waypoint wp5 = new Waypoint(11.30, -9.92, 4.55,
