@@ -51,6 +51,7 @@ public class YourService extends KiboRpcService {
                                     0, 0, -0.707, 0.707,
                                     0, 0, 0);  // PointGoal_1
 
+
         //マーカの設定
         Dictionary dictionary = Aruco.getPredefinedDictionary(Aruco.DICT_5X5_250);
         //ログを取るため
