@@ -1,27 +1,61 @@
         package jp.jaxa.iss.kibo.rpc.sampleapk;
+
+        import android.util.Log;
+
         import jp.jaxa.iss.kibo.rpc.api.KiboRpcService;
         import gov.nasa.arc.astrobee.Result;
         import gov.nasa.arc.astrobee.types.Point;
         import gov.nasa.arc.astrobee.types.Quaternion;
+
+        import org.opencv.aruco.Aruco;
+        import org.opencv.aruco.Dictionary;
         import org.opencv.core.Mat;
+
+        import java.lang.reflect.Array;
+        import java.util.ArrayList;
+        import java.util.Arrays;
+        import java.util.List;
+
 /**
  * Class meant to handle commands from the Ground Data System and execute them in Astrobee
  */
 public class YourService extends KiboRpcService {
+    private final String TAG = this.getClass().getSimpleName();
+
     @Override
     protected void runPlan1(){
 
         // set Waypoint value
         // Write Position and Quaternion here.
-        // Waypoint(pos_x,pos_y,pos_z,qua_x,qua_y,qua_z,qua_w)
-        Waypoint wp1 = new Waypoint(10.71, -7.77, 4.48, 0, 0.707, 0, 0.707);    // Point1
-        Waypoint wp2 = new Waypoint(11.30, -8, 4.55, 0, 0, -0.707, 0.707);      // wp1_From1to2_2
-        Waypoint wp3 = new Waypoint(11.30, -9.92, 4.55, 0, 0, -0.707, 0.707);   // wp2_From1to2_2
-        Waypoint wp4 = new Waypoint(11.22, -9.92, 5.48, 0, 0, -0.707, 0.707);   // Point2_1
-        Waypoint wp5 = new Waypoint(11.30, -9.92, 4.55, 0, 0, -0.707, 0.707);   // wp1_From2toG
-        Waypoint wp6 = new Waypoint(11.30, -8.0, 4.55, 0, 0, -0.707, 0.707);   // wp3_From2toG
-        Waypoint wp7 = new Waypoint(11.27, -7.89, 4.96, 0, 0, -0.707, 0.707);  // PointGoal_1
+        // Waypoint(pos_x, pos_y, pos_z, qua_x, qua_y, qua_z, qua_w, avoidX, avoidY, avoidZ)
+        //X : right,left Y : back, front Z : down,up
+        Waypoint wp1 = new Waypoint(10.71, -7.77, 4.48,
+                                    0, 0.707, 0, 0.707,
+                                    0, 0, 0.05);    // Point1
+        Waypoint wp2 = new Waypoint(11.30, -8, 4.55,
+                                    0, 0, -0.707, 0.707,
+                                    0, 0, 0);      // wp1_From1to2
+        Waypoint wp3 = new Waypoint(11.30, -9.92, 4.55,
+                                    0, 0, -0.707, 0.707,
+                                    0, 0, -0.05);   // wp2_From1to2_2
+        Waypoint wp4 = new Waypoint(11.204, -9.92, 5.47,
+                                    0, 0, -0.707, 0.707,
+                                    0, 0, -0.01);   // Point2_1
+        Waypoint wp5 = new Waypoint(11.30, -9.92, 4.55,
+                                    0, 0, -0.707, 0.707,
+                                    0, 0, 0);   // wp1_From2toG
+        Waypoint wp6 = new Waypoint(11.30, -8.0, 4.55,
+                                    0, 0, -0.707, 0.707,
+                                    0, 0, -0.05);   // wp3_From2toG
+        Waypoint wp7 = new Waypoint(11.27, -7.89, 4.96,
+                                    0, 0, -0.707, 0.707,
+                                    0, 0, 0);  // PointGoal_1
 
+
+        //マーカの設定
+        Dictionary dictionary = Aruco.getPredefinedDictionary(Aruco.DICT_5X5_250);
+        //ログを取るため
+        Log.i(TAG, "start mission");
         // the mission starts
         api.startMission();
         // move to a point Point1
@@ -32,6 +66,19 @@ public class YourService extends KiboRpcService {
         Mat image1 = api.getMatNavCam();
         // irradiate the laser
         api.laserControl(true);
+
+
+        //読み取った画像からマーカを認識
+        List<Mat> corners = new ArrayList<>();
+        Mat markerIds = new Mat();
+        Aruco.detectMarkers(image1, dictionary, corners, markerIds);
+        Aruco.drawDetectedMarkers(image1, corners, markerIds);
+        api.saveMatImage(image1, "image 1");
+        
+
+        //試しに出力
+        Print_AR(corners, markerIds);
+
         // take target1 snapshots
         api.takeTarget1Snapshot();
         // turn the laser off
@@ -69,6 +116,8 @@ public class YourService extends KiboRpcService {
         /* ******************************************** */
         // send mission completion
         api.reportMissionCompletion();
+
+        api.saveMatImage(image2,"image2");
     }
     @Override
     protected void runPlan2(){
@@ -96,8 +145,34 @@ public class YourService extends KiboRpcService {
         api.relativeMoveTo(point, quaternion, true);
     }
 
+
     private void MoveToWaypoint(Waypoint name){
-        moveToWrapper(name.posX, name.posY, name.posZ, name.quaX, name.quaY, name.quaZ, name.quaW);
+
+        final int LOOP_MAX = 10;
+
+        int count = 0;
+        while(count < LOOP_MAX){
+            final Point point = new Point(name.posX + name.avoidX*count, name.posY + name.avoidY*count, name.posZ + name.avoidZ*count);
+            final Quaternion quaternion = new Quaternion((float)name.quaX, (float)name.quaY, (float)name.quaZ, (float)name.quaW);
+            
+            Result result = api.moveTo(point, quaternion, true);
+            ++count;
+
+            if(result.hasSucceeded()){
+                break;
+            }
+            Log.i(TAG, "move Failure, retry");
+        }
+    }
+
+    private void Print_AR(List<Mat> corners, Mat markerIds) {
+        for (int n = 0; n < 4; n++) {
+            Log.i(TAG, "markerIds:" + markerIds.get(n,0));
+            Log.i(TAG, "左上:" + Arrays.toString(corners.get(n).get(0, 0)));
+            Log.i(TAG, "右上:" + Arrays.toString(corners.get(n).get(0, 1)));
+            Log.i(TAG, "右下:" + Arrays.toString(corners.get(n).get(0, 2)));
+            Log.i(TAG, "左下:" + Arrays.toString(corners.get(n).get(0, 3)));
+        }
     }
 
 }
