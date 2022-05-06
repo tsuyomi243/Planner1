@@ -58,7 +58,7 @@ public class YourService extends KiboRpcService {
         Aruco.detectMarkers(image1, dictionary, corners, markerIds);
         Aruco.drawDetectedMarkers(image1, corners, markerIds);
         api.saveMatImage(image1, "image 1");
-        
+
 
         //試しに出力
         Print_AR(corners, markerIds);
