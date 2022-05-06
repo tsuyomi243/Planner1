@@ -27,14 +27,30 @@ public class YourService extends KiboRpcService {
 
         // set Waypoint value
         // Write Position and Quaternion here.
-        // Waypoint(pos_x,pos_y,pos_z,qua_x,qua_y,qua_z,qua_w)
-        Waypoint wp1 = new Waypoint(10.71, -7.77, 4.48, 0, 0.707, 0, 0.707);    // Point1
-        Waypoint wp2 = new Waypoint(11.30, -8, 4.55, 0, 0, -0.707, 0.707);      // wp1_From1to2
-        Waypoint wp3 = new Waypoint(11.30, -9.92, 4.55, 0, 0, -0.707, 0.707);   // wp2_From1to2_2
-        Waypoint wp4 = new Waypoint(11.22, -9.92, 5.48, 0, 0, -0.707, 0.707);   // Point2_1
-        Waypoint wp5 = new Waypoint(11.30, -9.92, 4.55, 0, 0, -0.707, 0.707);   // wp1_From2toG
-        Waypoint wp6 = new Waypoint(11.30, -8.0, 4.55, 0, 0, -0.707, 0.707);   // wp3_From2toG
-        Waypoint wp7 = new Waypoint(11.27, -7.89, 4.96, 0, 0, -0.707, 0.707);  // PointGoal_1
+        // Waypoint(pos_x, pos_y, pos_z, qua_x, qua_y, qua_z, qua_w, avoidX, avoidY, avoidZ)
+        //X : right,left Y : back, front Z : down,up
+        Waypoint wp1 = new Waypoint(10.71, -7.77, 4.48,
+                                    0, 0.707, 0, 0.707,
+                                    0, 0, 0.05);    // Point1
+        Waypoint wp2 = new Waypoint(11.30, -8, 4.55,
+                                    0, 0, -0.707, 0.707,
+                                    0, 0, 0);      // wp1_From1to2
+        Waypoint wp3 = new Waypoint(11.30, -9.92, 4.55,
+                                    0, 0, -0.707, 0.707,
+                                    0, 0, -0.05);   // wp2_From1to2_2
+        Waypoint wp4 = new Waypoint(11.204, -9.92, 5.47,
+                                    0, 0, -0.707, 0.707,
+                                    0, 0, -0.01);   // Point2_1
+        Waypoint wp5 = new Waypoint(11.30, -9.92, 4.55,
+                                    0, 0, -0.707, 0.707,
+                                    0, 0, 0);   // wp1_From2toG
+        Waypoint wp6 = new Waypoint(11.30, -8.0, 4.55,
+                                    0, 0, -0.707, 0.707,
+                                    0, 0, -0.05);   // wp3_From2toG
+        Waypoint wp7 = new Waypoint(11.27, -7.89, 4.96,
+                                    0, 0, -0.707, 0.707,
+                                    0, 0, 0);  // PointGoal_1
+
 
         //マーカの設定
         Dictionary dictionary = Aruco.getPredefinedDictionary(Aruco.DICT_5X5_250);
@@ -132,20 +148,20 @@ public class YourService extends KiboRpcService {
 
     private void MoveToWaypoint(Waypoint name){
 
-        Result result;
-        final int LOOP_MAX = 3;
+        final int LOOP_MAX = 10;
 
-        final Point point = new Point(name.posX, name.posY, name.posZ);
-        final Quaternion quaternion = new Quaternion((float)name.quaX, (float)name.quaY,
-                (float)name.quaZ, (float)name.quaW);
+        int count = 0;
+        while(count < LOOP_MAX){
+            final Point point = new Point(name.posX + name.avoidX*count, name.posY + name.avoidY*count, name.posZ + name.avoidZ*count);
+            final Quaternion quaternion = new Quaternion((float)name.quaX, (float)name.quaY, (float)name.quaZ, (float)name.quaW);
+            
+            Result result = api.moveTo(point, quaternion, true);
+            ++count;
 
-        result = api.moveTo(point, quaternion, true);
-
-        int loopCount = 0;
-        while(!result.hasSucceeded() && loopCount < LOOP_MAX){
-            // Retry
-            result = api.moveTo(point, quaternion, true);
-            ++loopCount;
+            if(result.hasSucceeded()){
+                break;
+            }
+            Log.i(TAG, "move Failure, retry");
         }
     }
 
