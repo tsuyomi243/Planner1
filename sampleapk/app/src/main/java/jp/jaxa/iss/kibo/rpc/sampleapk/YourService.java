@@ -98,8 +98,7 @@ public class YourService extends KiboRpcService {
         //image2に対して、円の中心を検出する
         Aruco.detectMarkers(image2, dictionary, corners, markerIds);
 
-        // 複雑になりそうなので関数化させます。
-        // 右下を検出する(仮に本体が回転していても問題ないように -> 正しく動作している
+        // 右下のマーカーを検出する
         // in -> corner
         // out -> topLeftとなるマーカが配列の何番目かを表す数字n
         int br_num = findBottomRight(corners);
