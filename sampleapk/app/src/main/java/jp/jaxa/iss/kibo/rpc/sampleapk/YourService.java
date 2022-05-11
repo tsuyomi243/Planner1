@@ -95,10 +95,10 @@ public class YourService extends KiboRpcService {
         // get a camera image
         Mat image2 = api.getMatNavCam();
 
-        //image2に対して、円の中心を検出する
+        //image2のマーカー検出
         Aruco.detectMarkers(image2, dictionary, corners, markerIds);
 
-        // 右下のマーカーを検出する
+        // 右下のマーカーを探す
         // in -> corner
         // out -> topLeftとなるマーカが配列の何番目かを表す数字n
         int br_num = findBottomRight(corners);
