@@ -27,13 +27,28 @@ public class YourService extends KiboRpcService {
         // set Waypoint value
         // Write Position and Quaternion here.
         // Waypoint(pos_x,pos_y,pos_z,qua_x,qua_y,qua_z,qua_w)
-        Waypoint wp1 = new Waypoint(10.71, -7.77, 4.48, 0, 0.707, 0, 0.707);    // Point1
-        Waypoint wp2 = new Waypoint(11.30, -8, 4.55, 0, 0, -0.707, 0.707);      // wp1_From1to2_2
-        Waypoint wp3 = new Waypoint(11.30, -9.92, 4.55, 0, 0, -0.707, 0.707);   // wp2_From1to2_2
-        Waypoint wp4 = new Waypoint(11.22, -9.92, 5.48, 0, 0, -0.707, 0.707);   // Point2_1
-        Waypoint wp5 = new Waypoint(11.30, -9.92, 4.55, 0, 0, -0.707, 0.707);   // wp1_From2toG
-        Waypoint wp6 = new Waypoint(11.30, -8.0, 4.55, 0, 0, -0.707, 0.707);   // wp3_From2toG
-        Waypoint wp7 = new Waypoint(11.27, -7.89, 4.96, 0, 0, -0.707, 0.707);  // PointGoal_1
+        Waypoint wp1 = new Waypoint(10.71, -7.77, 4.48,
+                0, 0.707, 0, 0.707,
+                0, 0, 0.05);    // Point1
+        Waypoint wp2 = new Waypoint(11.30, -8, 4.55,
+                0, 0, -0.707, 0.707,
+                0, 0, 0);      // wp1_From1to2
+        Waypoint wp3 = new Waypoint(11.30, -9.92, 4.55,
+                0, 0, -0.707, 0.707,
+                0, 0, -0.05);   // wp2_From1to2_2
+        Waypoint wp4 = new Waypoint(11.204, -9.92, 5.47,
+                0, 0, -0.707, 0.707,
+                0, 0, -0.01);   // Point2_1
+        Waypoint wp5 = new Waypoint(11.30, -9.92, 4.55,
+                0, 0, -0.707, 0.707,
+                0, 0, 0);   // wp1_From2toG
+        Waypoint wp6 = new Waypoint(11.30, -8.0, 4.55,
+                0, 0, -0.707, 0.707,
+                0, 0, -0.05);   // wp3_From2toG
+        Waypoint wp7 = new Waypoint(11.27, -7.89, 4.96,
+                0, 0, -0.707, 0.707,
+                0, 0, 0);  // PointGoal_1
+
 
         //マーカの設定
         Dictionary dictionary = Aruco.getPredefinedDictionary(Aruco.DICT_5X5_250);
@@ -49,12 +64,15 @@ public class YourService extends KiboRpcService {
         api.laserControl(true);
         // get a camera image
         Mat image1 = api.getMatNavCam();
+
         //読み取った画像からマーカを認識
         List<Mat> corners = new ArrayList<>();
         Mat markerIds = new Mat();
         Aruco.detectMarkers(image1, dictionary, corners, markerIds);
         Aruco.drawDetectedMarkers(image1, corners, markerIds);
-        api.saveMatImage(image1, "image 1");
+        // save point1 image
+        api.saveBitmapImage(api.getBitmapNavCam(),"BitmapImage_point1");
+        api.saveMatImage(image1, "Mat_Image_point1");
         //試しに出力
         Print_AR(corners, markerIds);
         // take target1 snapshots
@@ -77,6 +95,9 @@ public class YourService extends KiboRpcService {
         api.laserControl(true);
         // take target1 snapshots
         api.takeTarget2Snapshot();
+        // save point2 image
+        api.saveBitmapImage(api.getBitmapNavCam(),"BitmapImage_point2");
+        api.saveMatImage(api.getMatNavCam(), "Mat_Image_point2");
         // turn the laser off
         api.laserControl(false);
 
@@ -122,7 +143,21 @@ public class YourService extends KiboRpcService {
     }
 
     private void MoveToWaypoint(Waypoint name){
-        moveToWrapper(name.posX, name.posY, name.posZ, name.quaX, name.quaY, name.quaZ, name.quaW);
+        final int LOOP_MAX = 10;
+
+        int count = 0;
+        while(count < LOOP_MAX){
+            final Point point = new Point(name.posX + name.avoidX*count, name.posY + name.avoidY*count, name.posZ + name.avoidZ*count);
+            final Quaternion quaternion = new Quaternion((float)name.quaX, (float)name.quaY, (float)name.quaZ, (float)name.quaW);
+
+            Result result = api.moveTo(point, quaternion, true);
+            ++count;
+
+            if(result.hasSucceeded()){
+                break;
+            }
+            Log.i(TAG, "move Failure, retry");
+        }
     }
 
     private void Print_AR(List<Mat> corners, Mat markerIds){
@@ -134,14 +169,5 @@ public class YourService extends KiboRpcService {
                     Log.i(TAG,"左下:"+ Arrays.toString(corners.get(id).get(0, 3)));
                 }
             }
-            /*
-            Log.i(TAG,"markerIds:"+ markerIds.get(0,j)[0]);
-            Log.i(TAG,"左上:"+ Arrays.toString(corners.get(i).get(0, 0)));
-            Log.i(TAG,"右上:"+ Arrays.toString(corners.get(i).get(0, 1)));
-            Log.i(TAG,"右下:"+ Arrays.toString(corners.get(i).get(0, 2)));
-            Log.i(TAG,"左下:"+ Arrays.toString(corners.get(i).get(0, 3)));
-            */
-
-
 }
 
