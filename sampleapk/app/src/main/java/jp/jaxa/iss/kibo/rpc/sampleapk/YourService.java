@@ -8,9 +8,10 @@
 
         import org.opencv.aruco.Aruco;
         import org.opencv.aruco.Dictionary;
+        import org.opencv.calib3d.Calib3d;
         import org.opencv.core.Mat;
+        import org.opencv.core.Scalar;
 
-        import java.lang.reflect.Array;
         import java.util.ArrayList;
         import java.util.Arrays;
         import java.util.List;
@@ -52,8 +53,14 @@ public class YourService extends KiboRpcService {
 
         //マーカの設定
         Dictionary dictionary = Aruco.getPredefinedDictionary(Aruco.DICT_5X5_250);
-        //ログを取るため
-        Log.i(TAG, "start mission");
+
+        //NaVCamのカメラ行列と歪み係数の取得
+        double[][] NavCamIntrinsics = api.getNavCamIntrinsics();
+        Scalar cameraM = new Scalar(NavCamIntrinsics[0]);
+        Mat cameraMatrix = new Mat(3,3,6,cameraM);
+        Scalar distortion = new Scalar(NavCamIntrinsics[1]);
+        Mat distortionCoefficients = new Mat(1,5,6,distortion);
+
         /* the mission starts */
         api.startMission();
         // move to a point Point1
@@ -71,12 +78,25 @@ public class YourService extends KiboRpcService {
         Aruco.detectMarkers(image1, dictionary, corners, markerIds);
         Aruco.drawDetectedMarkers(image1, corners, markerIds);
         // save point1 image
-        api.saveBitmapImage(api.getBitmapNavCam(),"BitmapImage_point1");
-        api.saveMatImage(image1, "Mat_Image_point1");
+        api.saveBitmapImage(api.getBitmapNavCam(),"BitmapImage_point1.png");
+        api.saveMatImage(image1, "Mat_Image_point1.png");
         //試しに出力
         Print_AR(corners, markerIds);
         // take target1 snapshots
         api.takeTarget1Snapshot();
+        //姿勢推定
+        Mat rotationMatrix = new Mat(), translationVectors = new Mat();
+        Aruco.estimatePoseSingleMarkers(corners,0.05f,cameraMatrix,distortionCoefficients,rotationMatrix,translationVectors);
+        for (int i= 0; i< markerIds.size().height; i++){
+            Aruco.drawAxis(image1,cameraMatrix,distortionCoefficients,rotationMatrix,translationVectors,0.1f);
+        }
+        api.saveMatImage(image1, "Mat_Image_point1_axis.png");
+
+        //歪み補正
+        Mat undis_image1 = new Mat();
+        org.opencv.calib3d.Calib3d.fisheye_undistortImage(image1,undis_image1,cameraMatrix,distortionCoefficients);
+        api.saveMatImage(undis_image1,"undis_image1");
+
         // turn the laser off
         api.laserControl(false);
 
@@ -96,8 +116,8 @@ public class YourService extends KiboRpcService {
         // take target1 snapshots
         api.takeTarget2Snapshot();
         // save point2 image
-        api.saveBitmapImage(api.getBitmapNavCam(),"BitmapImage_point2");
-        api.saveMatImage(api.getMatNavCam(), "Mat_Image_point2");
+        api.saveBitmapImage(api.getBitmapNavCam(),"BitmapImage_point2.png");
+        api.saveMatImage(api.getMatNavCam(), "Mat_Image_point2.png");
         // turn the laser off
         api.laserControl(false);
 
