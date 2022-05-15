@@ -10,6 +10,9 @@
         import org.opencv.aruco.Aruco;
         import org.opencv.aruco.Dictionary;
         import org.opencv.core.Mat;
+        import org.opencv.copre.MatOfDouble;
+        import org.opencv.core.Scalar;
+        import org.opencv.imgproc.Imgproc;
 
         import java.lang.reflect.Array;
         import java.util.ArrayList;
@@ -68,56 +71,134 @@ public class YourService extends KiboRpcService {
         api.laserControl(true);
 
 
-        //読み取った画像からマーカを認識
+        //マーカ関連の宣言
         List<Mat> corners = new ArrayList<>();
         Mat markerIds = new Mat();
+
+        //読み取った画像からマーカを認識
         Aruco.detectMarkers(image1, dictionary, corners, markerIds);
         Aruco.drawDetectedMarkers(image1, corners, markerIds);
-        api.saveMatImage(image1, "image 1");
-        
+        api.saveMatImage(image1, "image1.png");
+
 
         //試しに出力
         Print_AR(corners, markerIds);
-
         // take target1 snapshots
         api.takeTarget1Snapshot();
         // turn the laser off
         api.laserControl(false);
-
         // move to a point wp1_From1to2
         MoveToWaypoint(wp2);
-
         // move to a point wp2_From1to2
         MoveToWaypoint(wp3);
-
         // move to a point Point2
         MoveToWaypoint(wp4);
-
         // get a camera image
+        // image2 = gray image
+        // image2_color = RGB image
         Mat image2 = api.getMatNavCam();
+        Mat image2_color = new Mat();
+        Imgproc.cvtColor(image2, image2_color, Imgproc.COLOR_GRAY2RGB);
+
+        MatOfDouble.fromArray():
+
+        //image2のマーカー検出
+        Aruco.detectMarkers(image2, dictionary, corners, markerIds);
+
+        // 右下のマーカーを探す
+        // in -> corner
+        // out -> topLeftとなるマーカが配列の何番目かを表す数字n
+        int br_num = findBottomRight(corners);
+        String str = "" + br_num;
+        Log.i(TAG, str);
+
+        //4隅の座標を取得
+        //右回りcorners.get(n)のリスト [右下、左下、左上、右上]x2
+        int[] num_clockwise = {2,1,3,0,2,1,3,0};
+        double[] xy_bottomRight = new double[2];
+        double[] xy_bottomLeft = new double[2];
+        double[] xy_topLeft = new double[2];
+        double[] xy_topRight = new double[2];
+        for(int n=0; n<4; n++){
+            if(br_num == num_clockwise[n]){
+                xy_bottomRight = corners.get(num_clockwise[n]).get(0,2);    // 右下
+                xy_bottomLeft = corners.get(num_clockwise[n+1]).get(0,3);    // 左下
+                xy_topLeft = corners.get(num_clockwise[n+2]).get(0,0);      // 左上
+                xy_topRight = corners.get(num_clockwise[n+3]).get(0,1);     //右上
+                // for Debug
+                Log.i(TAG, "xy_bottomRight:" + (int)xy_bottomRight[0] + "," + (int)xy_bottomRight[1]);
+                Log.i(TAG, "xy_bottomLeft:" + (int)xy_bottomLeft[0] + "," + (int)xy_bottomLeft[1]);
+                Log.i(TAG, "xy_topLeft:" + (int)xy_topLeft[0] + "," + (int)xy_topLeft[1]);
+                Log.i(TAG, "xy_topRight:" + (int)xy_topRight[0] + "," + (int)xy_topRight[1]);
+            }
+        }
+
+        //ハフ変換を使えば行けそう
+        Mat circles = new Mat();
+        /*
+            HoughCircles(gray, circles, HOUGH_GRADIENT, dp, min_dist, param_1, param_2, min_radius, max_radius)
+                gray: Input image (grayscale).
+                circles: A vector that stores sets of 3 values: xc,yc,r for each detected circle.
+                HOUGH_GRADIENT: Define the detection method. Currently this is the only one available in OpenCV.
+                dp = 1: The inverse ratio of resolution.
+                min_dist = gray.rows/16: Minimum distance between detected centers.
+                param_1 = 200: Upper threshold for the internal Canny edge detector.
+                param_2 = 100*: Threshold for center detection.
+                min_radius = 0: Minimum radius to be detected. If unknown, put zero as default.
+                max_radius = 0: Maximum radius to be detected. If unknown, put zero as default.
+        */
+        Imgproc.HoughCircles(image2, circles, Imgproc.HOUGH_GRADIENT, 1.0, image2.size().height/16, 100.0, 30.0, 1, 30);
+
+        //画像に検出した円を描画
+        for(int x = 0; x < circles.cols(); x++){
+            double[] c = circles.get(0, x);
+            org.opencv.core.Point center = new org.opencv.core.Point(Math.round(c[0]), Math.round(c[1]));
+            // circle center
+            // center color = Red
+            Imgproc.circle(image2_color, center, 1, new Scalar(255,0,0), 3, 8, 0 );
+            // circle outline
+            int radius = (int) Math.round(c[2]);
+            // circle colors = Green
+            Imgproc.circle(image2_color, center, radius, new Scalar(0,255,0), 3, 8, 0 );
+            Log.i(TAG, "中心座標候補:"+ (int)Math.round(c[0]) + (int)Math.round(c[0]));
+        }
+
+        // Fixed の Target2 を画像上に表示
+        org.opencv.core.Point center_fixed = new org.opencv.core.Point(
+                ((int)xy_topLeft[0]+(int)xy_bottomRight[0])/2,
+                ((int)xy_topLeft[1]+(int)xy_bottomRight[1])/2);
+        // fixed center's color =  blue
+        Imgproc.circle(image2_color, center_fixed, 1, new Scalar(0,255,255), 1, 8, 0 );
+        Imgproc.circle(image2_color, center_fixed, 30, new Scalar(0,255,255), 3, 8, 0 );
+
+
+        //座標のLogを出力、画像の保存
+        Print_AR(corners, markerIds);
+        Aruco.drawDetectedMarkers(image2_color, corners, markerIds);
+        api.saveMatImage(image2_color, "image2_color.png");
+        api.saveMatImage(image2, "image2_gray.png");
+
+
+
         // irradiate the laser
         api.laserControl(true);
         // take target1 snapshots
         api.takeTarget2Snapshot();
         // turn the laser off
         api.laserControl(false);
-
         // move to a point wp1_From2toG
         MoveToWaypoint(wp5);
-
         // move to a point wp3_From2toG
         MoveToWaypoint(wp6);
-
         // move to a point Goal
         MoveToWaypoint(wp7);
-
         /* ******************************************** */
         /* write your own code and repair the air leak! */
         /* ******************************************** */
+
         // send mission completion
         api.reportMissionCompletion();
-
-        api.saveMatImage(image2,"image2");
+        api.saveMatImage(image2,"image2.png");
     }
     @Override
     protected void runPlan2(){
@@ -167,12 +248,34 @@ public class YourService extends KiboRpcService {
 
     private void Print_AR(List<Mat> corners, Mat markerIds) {
         for (int n = 0; n < 4; n++) {
-            Log.i(TAG, "markerIds:" + markerIds.get(n,0));
+            Log.i(TAG, "markerIds:" + Arrays.toString(markerIds.get(n,0)));
             Log.i(TAG, "左上:" + Arrays.toString(corners.get(n).get(0, 0)));
             Log.i(TAG, "右上:" + Arrays.toString(corners.get(n).get(0, 1)));
             Log.i(TAG, "右下:" + Arrays.toString(corners.get(n).get(0, 2)));
             Log.i(TAG, "左下:" + Arrays.toString(corners.get(n).get(0, 3)));
         }
+    }
+
+
+    //右下のマーカを見つける
+    private int findBottomRight(List<Mat> corners){
+        // out = 関数のreturn
+        int out = 0;
+        int temp = 0;
+
+        //corners.get(n).get(0, 0) -> n番目のマーカの右下のxy座標を取得
+        for(int n=0; n<4; n++){
+            // 三平方の定理で一番数字が大きいものは遠いことを用いる
+            // a^2 + b^2 = c^2
+            double[] ab = corners.get(n).get(0,2);
+            int c = (int)ab[0] * (int)ab[0] + (int)ab[1] * (int)ab[1];
+            if(temp < c ){
+                temp = c;
+                out = n;
+            }
+        }
+        // 右下（一番遠い）のは配列の何番目かをreturn
+        return out;
     }
 
 }
