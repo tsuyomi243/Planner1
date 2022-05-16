@@ -10,7 +10,7 @@
         import org.opencv.aruco.Aruco;
         import org.opencv.aruco.Dictionary;
         import org.opencv.core.Mat;
-        import org.opencv.copre.MatOfDouble;
+        import org.opencv.core.MatOfDouble;
         import org.opencv.core.Scalar;
         import org.opencv.imgproc.Imgproc;
 
@@ -100,8 +100,6 @@ public class YourService extends KiboRpcService {
         Mat image2_color = new Mat();
         Imgproc.cvtColor(image2, image2_color, Imgproc.COLOR_GRAY2RGB);
 
-        MatOfDouble.fromArray():
-
         //image2のマーカー検出
         Aruco.detectMarkers(image2, dictionary, corners, markerIds);
 
@@ -114,7 +112,7 @@ public class YourService extends KiboRpcService {
 
         //4隅の座標を取得
         //右回りcorners.get(n)のリスト [右下、左下、左上、右上]x2
-        int[] num_clockwise = {2,1,3,0,2,1,3,0};
+        int[] num_clockwise = {1,0,2,3,1,0,2,3};
         double[] xy_bottomRight = new double[2];
         double[] xy_bottomLeft = new double[2];
         double[] xy_topLeft = new double[2];
@@ -147,7 +145,7 @@ public class YourService extends KiboRpcService {
                 min_radius = 0: Minimum radius to be detected. If unknown, put zero as default.
                 max_radius = 0: Maximum radius to be detected. If unknown, put zero as default.
         */
-        Imgproc.HoughCircles(image2, circles, Imgproc.HOUGH_GRADIENT, 1.0, image2.size().height/16, 100.0, 30.0, 1, 30);
+        Imgproc.HoughCircles(image2, circles, Imgproc.HOUGH_GRADIENT, 1.0, image2.size().height/16, 100.0, 30.0, 50, 100);
 
         //画像に検出した円を描画
         for(int x = 0; x < circles.cols(); x++){
@@ -160,7 +158,7 @@ public class YourService extends KiboRpcService {
             int radius = (int) Math.round(c[2]);
             // circle colors = Green
             Imgproc.circle(image2_color, center, radius, new Scalar(0,255,0), 3, 8, 0 );
-            Log.i(TAG, "中心座標候補:"+ (int)Math.round(c[0]) + (int)Math.round(c[0]));
+            Log.i(TAG, "中心座標候補:"+ (int)Math.round(c[0]) + (int)Math.round(c[1]));
         }
 
         // Fixed の Target2 を画像上に表示
@@ -259,12 +257,14 @@ public class YourService extends KiboRpcService {
 
     //右下のマーカを見つける
     private int findBottomRight(List<Mat> corners){
+        Log.i(TAG,"start findBottomRight");
         // out = 関数のreturn
         int out = 0;
         int temp = 0;
 
         //corners.get(n).get(0, 0) -> n番目のマーカの右下のxy座標を取得
         for(int n=0; n<4; n++){
+            Log.i(TAG,"Loop" + n );
             // 三平方の定理で一番数字が大きいものは遠いことを用いる
             // a^2 + b^2 = c^2
             double[] ab = corners.get(n).get(0,2);
@@ -272,9 +272,11 @@ public class YourService extends KiboRpcService {
             if(temp < c ){
                 temp = c;
                 out = n;
+                Log.i(TAG,"change");
             }
         }
         // 右下（一番遠い）のは配列の何番目かをreturn
+        Log.i(TAG,"finish findBottomRight");
         return out;
     }
 
