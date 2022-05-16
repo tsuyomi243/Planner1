@@ -10,7 +10,7 @@
         import org.opencv.aruco.Aruco;
         import org.opencv.aruco.Dictionary;
         import org.opencv.core.Mat;
-        import org.opencv.copre.MatOfDouble;
+        //import org.opencv.copre.MatOfDouble;
         import org.opencv.core.Scalar;
         import org.opencv.imgproc.Imgproc;
 
@@ -100,7 +100,7 @@ public class YourService extends KiboRpcService {
         Mat image2_color = new Mat();
         Imgproc.cvtColor(image2, image2_color, Imgproc.COLOR_GRAY2RGB);
 
-        MatOfDouble.fromArray():
+        //MatOfDouble.fromArray();
 
         //image2のマーカー検出
         Aruco.detectMarkers(image2, dictionary, corners, markerIds);
@@ -149,24 +149,39 @@ public class YourService extends KiboRpcService {
         */
         Imgproc.HoughCircles(image2, circles, Imgproc.HOUGH_GRADIENT, 1.0, image2.size().height/16, 100.0, 30.0, 1, 30);
 
+        int[] changed_circle_pos = new int[2];
         //画像に検出した円を描画
         for(int x = 0; x < circles.cols(); x++){
             double[] c = circles.get(0, x);
-            org.opencv.core.Point center = new org.opencv.core.Point(Math.round(c[0]), Math.round(c[1]));
-            // circle center
-            // center color = Red
-            Imgproc.circle(image2_color, center, 1, new Scalar(255,0,0), 3, 8, 0 );
-            // circle outline
-            int radius = (int) Math.round(c[2]);
-            // circle colors = Green
-            Imgproc.circle(image2_color, center, radius, new Scalar(0,255,0), 3, 8, 0 );
-            Log.i(TAG, "中心座標候補:"+ (int)Math.round(c[0]) + (int)Math.round(c[0]));
+            
+            //AR marker外の円を除去
+            //x
+            if(Math.round(c[0]) > (int)xy_topLeft[0] && Math.round(c[0]) < (int)xy_bottomRight[0]){
+                //y
+                if(Math.round(c[1]) > (int)xy_topLeft[1] && Math.round(c[1]) < (int)xy_bottomRight[1]){
+                    changed_circle_pos[0] = (int)Math.round(c[0]);
+                    changed_circle_pos[1] = (int)Math.round(c[1]);
+                    org.opencv.core.Point center = new org.opencv.core.Point(Math.round(c[0]), Math.round(c[1]));
+                    // circle center
+                    // center color = Red
+                    Imgproc.circle(image2_color, center, 1, new Scalar(255,0,0), 3, 8, 0 );
+                    // circle outline
+                    int radius = (int) Math.round(c[2]);
+                    // circle colors = Green
+                    Imgproc.circle(image2_color, center, radius, new Scalar(0,255,0), 3, 8, 0 );
+                    Log.i(TAG, "中心座標候補 x : "+ (int)Math.round(c[0]) +", y : "+ (int)Math.round(c[1]));
+                }
+            }
         }
+
+        final int[] circle_deviation = {3, -11};
+        final int[] fixed_circle_pos = {((int)xy_topLeft[0]+(int)xy_bottomRight[0])/2+circle_deviation[0],
+                                        ((int)xy_topLeft[1]+(int)xy_bottomRight[1])/2+circle_deviation[1]};
 
         // Fixed の Target2 を画像上に表示
         org.opencv.core.Point center_fixed = new org.opencv.core.Point(
-                ((int)xy_topLeft[0]+(int)xy_bottomRight[0])/2,
-                ((int)xy_topLeft[1]+(int)xy_bottomRight[1])/2);
+                fixed_circle_pos[0],
+                fixed_circle_pos[1]);
         // fixed center's color =  blue
         Imgproc.circle(image2_color, center_fixed, 1, new Scalar(0,255,255), 1, 8, 0 );
         Imgproc.circle(image2_color, center_fixed, 30, new Scalar(0,255,255), 3, 8, 0 );
@@ -178,6 +193,20 @@ public class YourService extends KiboRpcService {
         api.saveMatImage(image2_color, "image2_color.png");
         api.saveMatImage(image2, "image2_gray.png");
 
+        //レーザ位置修正(相対移動)
+        double[] fix_laser_pos = new double[2];
+        double[] AR12_bottomright = new double[2];
+        double[] AR12_center = new double[2];
+        AR12_bottomright = corners.get(2).get(0,2);
+        AR12_center[0] = ((int)xy_topLeft[0]+(int)AR12_bottomright[0])/2;
+        AR12_center[1] = ((int)xy_topLeft[1]+(int)AR12_bottomright[1])/2;
+        Log.i(TAG, "AR12 中心座標 x : "+ (int)AR12_center[0] +", y : "+ (int)AR12_center[1]);
+        final double distance_per_pixel = (fixed_circle_pos[0]-AR12_center[0])/0.1125;
+
+        fix_laser_pos[0] = (fixed_circle_pos[0] - changed_circle_pos[0])*distance_per_pixel;
+        fix_laser_pos[1] = (fixed_circle_pos[1] - changed_circle_pos[1])*distance_per_pixel;
+
+        relativeMoveToWrapper(fix_laser_pos[0], 0, fix_laser_pos[1], 0, 0, -0.707, 0.707);
 
 
         // irradiate the laser
