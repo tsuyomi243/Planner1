@@ -145,7 +145,7 @@ public class YourService extends KiboRpcService {
                 min_radius = 0: Minimum radius to be detected. If unknown, put zero as default.
                 max_radius = 0: Maximum radius to be detected. If unknown, put zero as default.
         */
-        Imgproc.HoughCircles(image2, circles, Imgproc.HOUGH_GRADIENT, 1.0, image2.size().height/16, 100.0, 30.0, 1, 30);
+        Imgproc.HoughCircles(image2, circles, Imgproc.HOUGH_GRADIENT, 1.0, image2.size().height/16, 100.0, 30.0, 50, 100);
 
         //画像に検出した円を描画
         for(int x = 0; x < circles.cols(); x++){
@@ -158,7 +158,7 @@ public class YourService extends KiboRpcService {
             int radius = (int) Math.round(c[2]);
             // circle colors = Green
             Imgproc.circle(image2_color, center, radius, new Scalar(0,255,0), 3, 8, 0 );
-            Log.i(TAG, "中心座標候補:"+ (int)Math.round(c[0]) + (int)Math.round(c[0]));
+            Log.i(TAG, "中心座標候補:"+ (int)Math.round(c[0]) + (int)Math.round(c[1]));
         }
 
         // Fixed の Target2 を画像上に表示
