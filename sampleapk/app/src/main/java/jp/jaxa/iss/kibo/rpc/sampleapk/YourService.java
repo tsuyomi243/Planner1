@@ -9,7 +9,9 @@
         import org.opencv.aruco.Aruco;
         import org.opencv.aruco.Dictionary;
         import org.opencv.calib3d.Calib3d;
+        import org.opencv.core.CvType;
         import org.opencv.core.Mat;
+        import org.opencv.core.Rect;
         import org.opencv.core.Scalar;
 
         import java.util.ArrayList;
@@ -56,10 +58,10 @@ public class YourService extends KiboRpcService {
 
         //NaVCamのカメラ行列と歪み係数の取得
         double[][] NavCamIntrinsics = api.getNavCamIntrinsics();
-        Scalar cameraM = new Scalar(NavCamIntrinsics[0]);
-        Mat cameraMatrix = new Mat(3,3,6,cameraM);
-        Scalar distortion = new Scalar(NavCamIntrinsics[1]);
-        Mat distortionCoefficients = new Mat(1,5,6,distortion);
+        Mat cameraMatrix = new Mat(3,3,CvType.CV_32FC1);
+        cameraMatrix.put(0,0,NavCamIntrinsics[0]);
+        Mat distortionCoefficients = new Mat();
+        distortionCoefficients.put(0,0,NavCamIntrinsics[1]);
 
         /* the mission starts */
         api.startMission();
@@ -84,18 +86,33 @@ public class YourService extends KiboRpcService {
         Print_AR(corners, markerIds);
         // take target1 snapshots
         api.takeTarget1Snapshot();
-        //姿勢推定
-        Mat rotationMatrix = new Mat(), translationVectors = new Mat();
-        Aruco.estimatePoseSingleMarkers(corners,0.05f,cameraMatrix,distortionCoefficients,rotationMatrix,translationVectors);
-        for (int i= 0; i< markerIds.size().height; i++){
-            Aruco.drawAxis(image1,cameraMatrix,distortionCoefficients,rotationMatrix,translationVectors,0.1f);
-        }
-        api.saveMatImage(image1, "Mat_Image_point1_axis.png");
+
 
         //歪み補正
+        Log.i(TAG,"歪み補正計算スタート");
         Mat undis_image1 = new Mat();
-        org.opencv.calib3d.Calib3d.fisheye_undistortImage(image1,undis_image1,cameraMatrix,distortionCoefficients);
+        Calib3d.fisheye_undistortImage(image1,undis_image1,cameraMatrix,distortionCoefficients);
+        Log.i(TAG,"歪み補正計算完了");
         api.saveMatImage(undis_image1,"undis_image1");
+        Log.i(TAG,"歪み補正計算完了");
+
+
+        //姿勢推定
+        if (0 < corners.size()){
+            Mat rotationMatrix = new Mat(), translationVectors = new Mat();
+            Log.i(TAG,"姿勢計算スタート");
+            Aruco.estimatePoseSingleMarkers(corners,0.05f,cameraMatrix,distortionCoefficients,rotationMatrix,translationVectors);
+            Log.i(TAG,"Try Read AR! estimatePoseSingleMarkers!");
+            Log.i(TAG,"Try Read AR! distorsionMatrix: "+translationVectors.dump());
+            Log.i(TAG,"姿勢計算完了");
+            for (int i= 0; i< markerIds.size().height; i++){
+                Aruco.drawAxis(image1,cameraMatrix,distortionCoefficients,rotationMatrix.row(i),translationVectors.row(i),0.1f);
+            }
+            Log.i(TAG,"姿勢出力完了");
+            api.saveMatImage(image1, "Mat_Image_point1_axis.png");
+        }
+
+
 
         // turn the laser off
         api.laserControl(false);
@@ -118,6 +135,7 @@ public class YourService extends KiboRpcService {
         // save point2 image
         api.saveBitmapImage(api.getBitmapNavCam(),"BitmapImage_point2.png");
         api.saveMatImage(api.getMatNavCam(), "Mat_Image_point2.png");
+
         // turn the laser off
         api.laserControl(false);
 
