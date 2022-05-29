@@ -106,12 +106,19 @@ public class YourService extends KiboRpcService {
         //image2のマーカー検出
         Aruco.detectMarkers(image2, dictionary, corners, markerIds);
 
-        // 右下のマーカーを探す
-        // in -> corner
-        // out -> topLeftとなるマーカが配列の何番目かを表す数字n
-        int br_num = findBottomRight(corners);
-        String str = "" + br_num;
-        Log.i(TAG, str);
+        /*
+            #動作が不安定なため一時的に削除
+
+                // 右下のマーカーを探す
+                // in -> corner
+                // out -> topLeftとなるマーカが配列の何番目かを表す数字n
+                int br_num = findBottomRight(corners);
+                String str = "" + br_num;
+                Log.i(TAG, str);
+        */
+
+        // 一時的な解決策
+        br_num = 1
 
         //4隅の座標を取得
         //右回りcorners.get(n)のリスト [右下、左下、左上、右上]x2
