@@ -145,7 +145,7 @@ public class YourService extends KiboRpcService {
                 min_radius = 0: Minimum radius to be detected. If unknown, put zero as default.
                 max_radius = 0: Maximum radius to be detected. If unknown, put zero as default.
         */
-        Imgproc.HoughCircles(image2, circles, Imgproc.HOUGH_GRADIENT, 1.0, image2.size().height/16, 100.0, 30.0, 50, 100);
+        Imgproc.HoughCircles(image2, circles, Imgproc.HOUGH_GRADIENT, 1.0, image2.size().height/16, 100.0, 30.0, 10, 100);
 
         //画像に検出した円を描画
         for(int x = 0; x < circles.cols(); x++){
