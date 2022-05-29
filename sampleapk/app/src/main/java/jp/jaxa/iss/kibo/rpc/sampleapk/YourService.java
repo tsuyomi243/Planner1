@@ -131,8 +131,14 @@ public class YourService extends KiboRpcService {
                 Log.i(TAG, "xy_bottomLeft:" + (int)xy_bottomLeft[0] + "," + (int)xy_bottomLeft[1]);
                 Log.i(TAG, "xy_topLeft:" + (int)xy_topLeft[0] + "," + (int)xy_topLeft[1]);
                 Log.i(TAG, "xy_topRight:" + (int)xy_topRight[0] + "," + (int)xy_topRight[1]);
+                Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_bottomRight[0], (int)xy_bottomRight[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
+                Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_bottomLeft[0], (int)xy_bottomLeft[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
+                Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_topRight[0], (int)xy_topRight[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
+                Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_topLeft[0], (int)xy_topLeft[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
             }
         }
+        //座標のLogを出力、
+        Print_AR(corners, markerIds);
 
         //ハフ変換を使えば行けそう
         Mat circles = new Mat();
@@ -148,18 +154,19 @@ public class YourService extends KiboRpcService {
                 min_radius = 0: Minimum radius to be detected. If unknown, put zero as default.
                 max_radius = 0: Maximum radius to be detected. If unknown, put zero as default.
         */
-        Imgproc.HoughCircles(image2, circles, Imgproc.HOUGH_GRADIENT, 1.0, image2.size().height/16, 100.0, 30.0, 50, 100);
+        Imgproc.HoughCircles(image2, circles, Imgproc.HOUGH_GRADIENT, 1.0, image2.size().height/16, 100.0, 30.0, 10, 100);
 
         int[] changed_circle_pos = new int[2];
         //画像に検出した円を描画
         for(int x = 0; x < circles.cols(); x++){
             double[] c = circles.get(0, x);
-            
+
+            Log.i(TAG, "中心座標候補 x : "+ (int)Math.round(c[0]) +", y : "+ (int)Math.round(c[1]));
             //AR marker外の円を除去
             //x
-            if(Math.round(c[0]) > (int)xy_topLeft[0] && Math.round(c[0]) < (int)xy_bottomRight[0]){
+            if((int)Math.round(c[0]) > (int)xy_topLeft[0] && (int)Math.round(c[0]) < (int)xy_bottomRight[0]){
                 //y
-                if(Math.round(c[1]) > (int)xy_topLeft[1] && Math.round(c[1]) < (int)xy_bottomRight[1]){
+                if((int)Math.round(c[1]) > (int)xy_topLeft[1] && (int)Math.round(c[1]) < (int)xy_bottomRight[1]){
                     changed_circle_pos[0] = (int)Math.round(c[0]);
                     changed_circle_pos[1] = (int)Math.round(c[1]);
                     org.opencv.core.Point center = new org.opencv.core.Point(Math.round(c[0]), Math.round(c[1]));
@@ -170,7 +177,6 @@ public class YourService extends KiboRpcService {
                     int radius = (int) Math.round(c[2]);
                     // circle colors = Green
                     Imgproc.circle(image2_color, center, radius, new Scalar(0,255,0), 3, 8, 0 );
-                    Log.i(TAG, "中心座標候補 x : "+ (int)Math.round(c[0]) +", y : "+ (int)Math.round(c[1]));
                 }
             }
         }
@@ -188,27 +194,28 @@ public class YourService extends KiboRpcService {
         Imgproc.circle(image2_color, center_fixed, 30, new Scalar(0,255,255), 3, 8, 0 );
 
 
-        //座標のLogを出力、画像の保存
-        Print_AR(corners, markerIds);
-        Aruco.drawDetectedMarkers(image2_color, corners, markerIds);
-        api.saveMatImage(image2_color, "image2_color.png");
-        api.saveMatImage(image2, "image2_gray.png");
+
 
         //レーザ位置修正(相対移動)
+        Log.i(TAG, "レーザ位置修正移動");
         double[] fix_laser_pos = new double[2];
         double[] AR12_bottomright = new double[2];
         double[] AR12_center = new double[2];
         AR12_bottomright = corners.get(2).get(0,2);
         AR12_center[0] = ((int)xy_topLeft[0]+(int)AR12_bottomright[0])/2;
         AR12_center[1] = ((int)xy_topLeft[1]+(int)AR12_bottomright[1])/2;
+        //debug
         Log.i(TAG, "AR12 中心座標 x : "+ (int)AR12_center[0] +", y : "+ (int)AR12_center[1]);
-        final double distance_per_pixel = (fixed_circle_pos[0]-AR12_center[0])/0.1125;
+        Imgproc.circle(image2_color, new org.opencv.core.Point((int)AR12_center[0], (int)AR12_center[1]), 2, new Scalar(255,0,255), 3, 8, 0 );
+        final double distance_per_pixel = 0.1125/(fixed_circle_pos[0]-AR12_center[0]); //[m/pix]
 
         fix_laser_pos[0] = (fixed_circle_pos[0] - changed_circle_pos[0])*distance_per_pixel;
         fix_laser_pos[1] = (fixed_circle_pos[1] - changed_circle_pos[1])*distance_per_pixel;
+        Log.i(TAG, "修正量 : "+ fix_laser_pos[0] +", y : "+ fix_laser_pos[1]);
 
         relativeMoveToWrapper(fix_laser_pos[0], 0, fix_laser_pos[1], 0, 0, -0.707, 0.707);
 
+        //画像の保存
 
         // irradiate the laser
         api.laserControl(true);
@@ -222,13 +229,13 @@ public class YourService extends KiboRpcService {
         MoveToWaypoint(wp6);
         // move to a point Goal
         MoveToWaypoint(wp7);
-        /* ******************************************** */
-        /* write your own code and repair the air leak! */
-        /* ******************************************** */
 
         // send mission completion
         api.reportMissionCompletion();
         api.saveMatImage(image2,"image2.png");
+        Aruco.drawDetectedMarkers(image2_color, corners, markerIds);
+        api.saveMatImage(image2_color, "image2_color.png");
+        api.saveMatImage(image2, "image2_gray.png");
     }
     @Override
     protected void runPlan2(){
