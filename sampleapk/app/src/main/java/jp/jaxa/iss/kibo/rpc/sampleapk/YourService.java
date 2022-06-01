@@ -123,6 +123,8 @@ public class YourService extends KiboRpcService {
         double[] xy_bottomLeft = new double[2];
         double[] xy_bottomRight = new double[2];
 
+        double[] AR12_bottomright = new double[2];
+
         //  マーカー全体の4隅の座標を取得
         for(int i=0; i<4; i++){
             int id = (int)markerIds.get(i,0)[0];
@@ -136,6 +138,8 @@ public class YourService extends KiboRpcService {
 
                 case 12:
                     // 左上
+                    AR12_bottomright = corners.get(i).get(0,2);
+
                     xy_topLeft = corners.get(i).get(0,0);
                     Log.i(TAG, "xy_topLeft:" + (int)xy_topLeft[0] + "," + (int)xy_topLeft[1]);
                     Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_topLeft[0], (int)xy_topLeft[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
@@ -241,9 +245,7 @@ public class YourService extends KiboRpcService {
         //レーザ位置修正(相対移動)
         Log.i(TAG, "レーザ位置修正移動");
         double[] fix_laser_pos = new double[2];
-        double[] AR12_bottomright = new double[2];
         double[] AR12_center = new double[2];
-        AR12_bottomright = corners.get(2).get(0,2);
         AR12_center[0] = ((int)xy_topLeft[0]+(int)AR12_bottomright[0])/2;
         AR12_center[1] = ((int)xy_topLeft[1]+(int)AR12_bottomright[1])/2;
         //debug
@@ -255,7 +257,11 @@ public class YourService extends KiboRpcService {
         fix_laser_pos[1] = (fixed_circle_pos[1] - changed_circle_pos[1])*distance_per_pixel;
         Log.i(TAG, "修正量 : "+ fix_laser_pos[0] +", y : "+ fix_laser_pos[1]);
 
-        relativeMoveToWrapper(fix_laser_pos[0], 0, fix_laser_pos[1], 0, 0, -0.707, 0.707);
+        double fix_distance = Math.sqrt(fix_laser_pos[0]*fix_laser_pos[0] + fix_laser_pos[1]*fix_laser_pos[1]);
+        //誤検出による破綻防止
+        if(fix_distance < 0.03){
+            relativeMoveToWrapper(fix_laser_pos[0], 0, fix_laser_pos[1], 0, 0, -0.707, 0.707);
+        }
 
         //画像の保存
 
@@ -279,14 +285,17 @@ public class YourService extends KiboRpcService {
         api.saveMatImage(image2_color, "image2_color.png");
         api.saveMatImage(image2, "image2_gray.png");
     }
+
     @Override
     protected void runPlan2(){
         // write here your plan 2
     }
+
     @Override
     protected void runPlan3(){
         // write here your plan 3
     }
+
     // You can add your method
     private void moveToWrapper(double pos_x, double pos_y, double pos_z,
                                double qua_x, double qua_y, double qua_z,
@@ -296,6 +305,7 @@ public class YourService extends KiboRpcService {
                 (float)qua_z, (float)qua_w);
         api.moveTo(point, quaternion, true);
     }
+
     private void relativeMoveToWrapper(double pos_x, double pos_y, double pos_z,
                                        double qua_x, double qua_y, double qua_z,
                                        double qua_w) {
