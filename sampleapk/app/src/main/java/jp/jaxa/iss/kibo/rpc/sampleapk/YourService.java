@@ -10,7 +10,9 @@
         import org.opencv.aruco.Aruco;
         import org.opencv.aruco.Dictionary;
         import org.opencv.core.Mat;
+
         import org.opencv.core.MatOfDouble;
+
         import org.opencv.core.Scalar;
         import org.opencv.imgproc.Imgproc;
 
@@ -100,36 +102,89 @@ public class YourService extends KiboRpcService {
         Mat image2_color = new Mat();
         Imgproc.cvtColor(image2, image2_color, Imgproc.COLOR_GRAY2RGB);
 
+
         //image2のマーカー検出
         Aruco.detectMarkers(image2, dictionary, corners, markerIds);
 
-        // 右下のマーカーを探す
-        // in -> corner
-        // out -> topLeftとなるマーカが配列の何番目かを表す数字n
-        int br_num = findBottomRight(corners);
-        String str = "" + br_num;
-        Log.i(TAG, str);
+        /*
+            #動作が不安定なため一時的に削除
 
-        //4隅の座標を取得
-        //右回りcorners.get(n)のリスト [右下、左下、左上、右上]x2
-        int[] num_clockwise = {1,0,2,3,1,0,2,3};
-        double[] xy_bottomRight = new double[2];
-        double[] xy_bottomLeft = new double[2];
-        double[] xy_topLeft = new double[2];
+                // 右下のマーカーを探す
+                // in -> corner
+                // out -> topLeftとなるマーカが配列の何番目かを表す数字n
+                int br_num = findBottomRight(corners);
+                String str = "" + br_num;
+                Log.i(TAG, str);
+        */
+
+        //   ローカル変数 宣言
         double[] xy_topRight = new double[2];
-        for(int n=0; n<4; n++){
-            if(br_num == num_clockwise[n]){
-                xy_bottomRight = corners.get(num_clockwise[n]).get(0,2);    // 右下
-                xy_bottomLeft = corners.get(num_clockwise[n+1]).get(0,3);    // 左下
-                xy_topLeft = corners.get(num_clockwise[n+2]).get(0,0);      // 左上
-                xy_topRight = corners.get(num_clockwise[n+3]).get(0,1);     //右上
-                // for Debug
-                Log.i(TAG, "xy_bottomRight:" + (int)xy_bottomRight[0] + "," + (int)xy_bottomRight[1]);
-                Log.i(TAG, "xy_bottomLeft:" + (int)xy_bottomLeft[0] + "," + (int)xy_bottomLeft[1]);
-                Log.i(TAG, "xy_topLeft:" + (int)xy_topLeft[0] + "," + (int)xy_topLeft[1]);
-                Log.i(TAG, "xy_topRight:" + (int)xy_topRight[0] + "," + (int)xy_topRight[1]);
+        double[] xy_topLeft = new double[2];
+        double[] xy_bottomLeft = new double[2];
+        double[] xy_bottomRight = new double[2];
+
+        double[] AR12_bottomright = new double[2];
+
+        //  マーカー全体の4隅の座標を取得
+        for(int i=0; i<4; i++){
+            int id = (int)markerIds.get(i,0)[0];
+            switch(id){
+                case 11:
+                    // 右上
+                    xy_topRight = corners.get(i).get(0,1);
+                    Log.i(TAG, "xy_topRight:" + (int)xy_topRight[0] + "," + (int)xy_topRight[1]);
+                    Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_topRight[0], (int)xy_topRight[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
+                    break;
+
+                case 12:
+                    // 左上
+                    AR12_bottomright = corners.get(i).get(0,2);
+
+                    xy_topLeft = corners.get(i).get(0,0);
+                    Log.i(TAG, "xy_topLeft:" + (int)xy_topLeft[0] + "," + (int)xy_topLeft[1]);
+                    Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_topLeft[0], (int)xy_topLeft[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
+                    break;
+
+                case 13:
+                    // 左下
+                    xy_bottomLeft = corners.get(i).get(0,3);
+                    Log.i(TAG, "xy_bottomLeft:" + (int)xy_bottomLeft[0] + "," + (int)xy_bottomLeft[1]);
+                    Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_bottomLeft[0], (int)xy_bottomLeft[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
+                    break;
+
+                case 14:
+                    // 右下
+                    xy_bottomRight = corners.get(i).get(0,2);
+                    Log.i(TAG, "xy_bottomRight:" + (int)xy_bottomRight[0] + "," + (int)xy_bottomRight[1]);
+                    Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_bottomRight[0], (int)xy_bottomRight[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
+                    break;
+
+                default:
+                    Log.w(TAG, "markerId is not Correct! id=" + id);
+                    break;
             }
         }
+        /*
+            動作不良のためコメント化
+
+                                //4隅の座標を取得
+                                xy_bottomRight = corners.get(num_clockwise[n]).get(0,2);    // 右下
+                                xy_bottomLeft = corners.get(num_clockwise[n+1]).get(0,3);    // 左下
+                                xy_topLeft = corners.get(num_clockwise[n+2]).get(0,0);      // 左上
+                                xy_topRight = corners.get(num_clockwise[n+3]).get(0,1);     //右上
+                                // for Debug
+                                Log.i(TAG, "xy_bottomRight:" + (int)xy_bottomRight[0] + "," + (int)xy_bottomRight[1]);
+                                Log.i(TAG, "xy_bottomLeft:" + (int)xy_bottomLeft[0] + "," + (int)xy_bottomLeft[1]);
+                                Log.i(TAG, "xy_topLeft:" + (int)xy_topLeft[0] + "," + (int)xy_topLeft[1]);
+                                Log.i(TAG, "xy_topRight:" + (int)xy_topRight[0] + "," + (int)xy_topRight[1]);
+                                Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_bottomRight[0], (int)xy_bottomRight[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
+                                Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_bottomLeft[0], (int)xy_bottomLeft[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
+                                Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_topRight[0], (int)xy_topRight[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
+                                Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_topLeft[0], (int)xy_topLeft[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
+         */
+
+        //座標のLogを出力、
+        Print_AR(corners, markerIds);
 
         //ハフ変換を使えば行けそう
         Mat circles = new Mat();
@@ -147,36 +202,68 @@ public class YourService extends KiboRpcService {
         */
         Imgproc.HoughCircles(image2, circles, Imgproc.HOUGH_GRADIENT, 1.0, image2.size().height/16, 100.0, 30.0, 10, 100);
 
+        int[] changed_circle_pos = new int[2];
         //画像に検出した円を描画
         for(int x = 0; x < circles.cols(); x++){
             double[] c = circles.get(0, x);
-            org.opencv.core.Point center = new org.opencv.core.Point(Math.round(c[0]), Math.round(c[1]));
-            // circle center
-            // center color = Red
-            Imgproc.circle(image2_color, center, 1, new Scalar(255,0,0), 3, 8, 0 );
-            // circle outline
-            int radius = (int) Math.round(c[2]);
-            // circle colors = Green
-            Imgproc.circle(image2_color, center, radius, new Scalar(0,255,0), 3, 8, 0 );
-            Log.i(TAG, "中心座標候補:"+ (int)Math.round(c[0]) + (int)Math.round(c[1]));
+
+            Log.i(TAG, "中心座標候補 x : "+ (int)Math.round(c[0]) +", y : "+ (int)Math.round(c[1]));
+            //AR marker外の円を除去
+            //x
+            if((int)Math.round(c[0]) > (int)xy_topLeft[0] && (int)Math.round(c[0]) < (int)xy_bottomRight[0]){
+                //y
+                if((int)Math.round(c[1]) > (int)xy_topLeft[1] && (int)Math.round(c[1]) < (int)xy_bottomRight[1]){
+                    changed_circle_pos[0] = (int)Math.round(c[0]);
+                    changed_circle_pos[1] = (int)Math.round(c[1]);
+                    org.opencv.core.Point center = new org.opencv.core.Point(Math.round(c[0]), Math.round(c[1]));
+                    // circle center
+                    // center color = Red
+                    Imgproc.circle(image2_color, center, 1, new Scalar(255,0,0), 3, 8, 0 );
+                    // circle outline
+                    int radius = (int) Math.round(c[2]);
+                    // circle colors = Green
+                    Imgproc.circle(image2_color, center, radius, new Scalar(0,255,0), 3, 8, 0 );
+                }
+            }
         }
+
+        final int[] circle_deviation = {3, -11};
+        final int[] fixed_circle_pos = {((int)xy_topLeft[0]+(int)xy_bottomRight[0])/2+circle_deviation[0],
+                                        ((int)xy_topLeft[1]+(int)xy_bottomRight[1])/2+circle_deviation[1]};
 
         // Fixed の Target2 を画像上に表示
         org.opencv.core.Point center_fixed = new org.opencv.core.Point(
-                ((int)xy_topLeft[0]+(int)xy_bottomRight[0])/2,
-                ((int)xy_topLeft[1]+(int)xy_bottomRight[1])/2);
+                fixed_circle_pos[0],
+                fixed_circle_pos[1]);
         // fixed center's color =  blue
         Imgproc.circle(image2_color, center_fixed, 1, new Scalar(0,255,255), 1, 8, 0 );
         Imgproc.circle(image2_color, center_fixed, 30, new Scalar(0,255,255), 3, 8, 0 );
 
 
-        //座標のLogを出力、画像の保存
-        Print_AR(corners, markerIds);
-        Aruco.drawDetectedMarkers(image2_color, corners, markerIds);
-        api.saveMatImage(image2_color, "image2_color.png");
-        api.saveMatImage(image2, "image2_gray.png");
 
 
+        //レーザ位置修正(相対移動)
+        Log.i(TAG, "レーザ位置修正移動");
+        double[] fix_laser_pos = new double[2];
+        double[] AR12_center = new double[2];
+        AR12_center[0] = ((int)xy_topLeft[0]+(int)AR12_bottomright[0])/2;
+        AR12_center[1] = ((int)xy_topLeft[1]+(int)AR12_bottomright[1])/2;
+        //debug
+        Log.i(TAG, "AR12 中心座標 x : "+ (int)AR12_center[0] +", y : "+ (int)AR12_center[1]);
+        Imgproc.circle(image2_color, new org.opencv.core.Point((int)AR12_center[0], (int)AR12_center[1]), 2, new Scalar(255,0,255), 3, 8, 0 );
+        final double distance_per_pixel = 0.1125/(fixed_circle_pos[0]-AR12_center[0]); //[m/pix]
+
+        fix_laser_pos[0] = (fixed_circle_pos[0] - changed_circle_pos[0])*distance_per_pixel;
+        fix_laser_pos[1] = (fixed_circle_pos[1] - changed_circle_pos[1])*distance_per_pixel;
+        Log.i(TAG, "修正量 : "+ fix_laser_pos[0] +", y : "+ fix_laser_pos[1]);
+
+        double fix_distance = Math.sqrt(fix_laser_pos[0]*fix_laser_pos[0] + fix_laser_pos[1]*fix_laser_pos[1]);
+        //誤検出による破綻防止
+        if(fix_distance < 0.05){
+            relativeMoveToWrapper(fix_laser_pos[0], 0, fix_laser_pos[1], 0, 0, -0.707, 0.707);
+        }
+
+        //画像の保存
 
         // irradiate the laser
         api.laserControl(true);
@@ -190,22 +277,25 @@ public class YourService extends KiboRpcService {
         MoveToWaypoint(wp6);
         // move to a point Goal
         MoveToWaypoint(wp7);
-        /* ******************************************** */
-        /* write your own code and repair the air leak! */
-        /* ******************************************** */
 
         // send mission completion
         api.reportMissionCompletion();
         api.saveMatImage(image2,"image2.png");
+        Aruco.drawDetectedMarkers(image2_color, corners, markerIds);
+        api.saveMatImage(image2_color, "image2_color.png");
+        api.saveMatImage(image2, "image2_gray.png");
     }
+
     @Override
     protected void runPlan2(){
         // write here your plan 2
     }
+
     @Override
     protected void runPlan3(){
         // write here your plan 3
     }
+
     // You can add your method
     private void moveToWrapper(double pos_x, double pos_y, double pos_z,
                                double qua_x, double qua_y, double qua_z,
@@ -215,6 +305,7 @@ public class YourService extends KiboRpcService {
                 (float)qua_z, (float)qua_w);
         api.moveTo(point, quaternion, true);
     }
+
     private void relativeMoveToWrapper(double pos_x, double pos_y, double pos_z,
                                        double qua_x, double qua_y, double qua_z,
                                        double qua_w) {
