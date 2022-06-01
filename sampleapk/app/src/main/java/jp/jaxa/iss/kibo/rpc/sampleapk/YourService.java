@@ -259,7 +259,7 @@ public class YourService extends KiboRpcService {
 
         double fix_distance = Math.sqrt(fix_laser_pos[0]*fix_laser_pos[0] + fix_laser_pos[1]*fix_laser_pos[1]);
         //誤検出による破綻防止
-        if(fix_distance < 0.03){
+        if(fix_distance < 0.05){
             relativeMoveToWrapper(fix_laser_pos[0], 0, fix_laser_pos[1], 0, 0, -0.707, 0.707);
         }
 
