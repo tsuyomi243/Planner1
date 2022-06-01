@@ -117,33 +117,68 @@ public class YourService extends KiboRpcService {
                 Log.i(TAG, str);
         */
 
-        // 一時的な解決策
-        br_num = 1
-
-        //4隅の座標を取得
-        //右回りcorners.get(n)のリスト [右下、左下、左上、右上]x2
-        int[] num_clockwise = {1,0,2,3,1,0,2,3};
-        double[] xy_bottomRight = new double[2];
-        double[] xy_bottomLeft = new double[2];
-        double[] xy_topLeft = new double[2];
+        //   ローカル変数 宣言
         double[] xy_topRight = new double[2];
-        for(int n=0; n<4; n++){
-            if(br_num == num_clockwise[n]){
-                xy_bottomRight = corners.get(num_clockwise[n]).get(0,2);    // 右下
-                xy_bottomLeft = corners.get(num_clockwise[n+1]).get(0,3);    // 左下
-                xy_topLeft = corners.get(num_clockwise[n+2]).get(0,0);      // 左上
-                xy_topRight = corners.get(num_clockwise[n+3]).get(0,1);     //右上
-                // for Debug
-                Log.i(TAG, "xy_bottomRight:" + (int)xy_bottomRight[0] + "," + (int)xy_bottomRight[1]);
-                Log.i(TAG, "xy_bottomLeft:" + (int)xy_bottomLeft[0] + "," + (int)xy_bottomLeft[1]);
-                Log.i(TAG, "xy_topLeft:" + (int)xy_topLeft[0] + "," + (int)xy_topLeft[1]);
-                Log.i(TAG, "xy_topRight:" + (int)xy_topRight[0] + "," + (int)xy_topRight[1]);
-                Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_bottomRight[0], (int)xy_bottomRight[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
-                Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_bottomLeft[0], (int)xy_bottomLeft[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
-                Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_topRight[0], (int)xy_topRight[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
-                Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_topLeft[0], (int)xy_topLeft[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
+        double[] xy_topLeft = new double[2];
+        double[] xy_bottomLeft = new double[2];
+        double[] xy_bottomRight = new double[2];
+
+        //  マーカー全体の4隅の座標を取得
+        for(int i=0; i<4; i++){
+            int id = (int)markerIds.get(i,0)[0];
+            switch(id){
+                case 11:
+                    // 右上
+                    xy_topRight = corners.get(i).get(0,1);
+                    Log.i(TAG, "xy_topRight:" + (int)xy_topRight[0] + "," + (int)xy_topRight[1]);
+                    Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_topRight[0], (int)xy_topRight[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
+                    break;
+
+                case 12:
+                    // 左上
+                    xy_topLeft = corners.get(i).get(0,0);
+                    Log.i(TAG, "xy_topLeft:" + (int)xy_topLeft[0] + "," + (int)xy_topLeft[1]);
+                    Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_topLeft[0], (int)xy_topLeft[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
+                    break;
+
+                case 13:
+                    // 左下
+                    xy_bottomLeft = corners.get(i).get(0,3);
+                    Log.i(TAG, "xy_bottomLeft:" + (int)xy_bottomLeft[0] + "," + (int)xy_bottomLeft[1]);
+                    Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_bottomLeft[0], (int)xy_bottomLeft[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
+                    break;
+
+                case 14:
+                    // 右下
+                    xy_bottomRight = corners.get(i).get(0,2);
+                    Log.i(TAG, "xy_bottomRight:" + (int)xy_bottomRight[0] + "," + (int)xy_bottomRight[1]);
+                    Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_bottomRight[0], (int)xy_bottomRight[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
+                    break;
+
+                default:
+                    Log.w(TAG, "markerId is not Correct! id=" + id);
+                    break;
             }
         }
+        /*
+            動作不良のためコメント化
+
+                                //4隅の座標を取得
+                                xy_bottomRight = corners.get(num_clockwise[n]).get(0,2);    // 右下
+                                xy_bottomLeft = corners.get(num_clockwise[n+1]).get(0,3);    // 左下
+                                xy_topLeft = corners.get(num_clockwise[n+2]).get(0,0);      // 左上
+                                xy_topRight = corners.get(num_clockwise[n+3]).get(0,1);     //右上
+                                // for Debug
+                                Log.i(TAG, "xy_bottomRight:" + (int)xy_bottomRight[0] + "," + (int)xy_bottomRight[1]);
+                                Log.i(TAG, "xy_bottomLeft:" + (int)xy_bottomLeft[0] + "," + (int)xy_bottomLeft[1]);
+                                Log.i(TAG, "xy_topLeft:" + (int)xy_topLeft[0] + "," + (int)xy_topLeft[1]);
+                                Log.i(TAG, "xy_topRight:" + (int)xy_topRight[0] + "," + (int)xy_topRight[1]);
+                                Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_bottomRight[0], (int)xy_bottomRight[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
+                                Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_bottomLeft[0], (int)xy_bottomLeft[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
+                                Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_topRight[0], (int)xy_topRight[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
+                                Imgproc.circle(image2_color, new org.opencv.core.Point((int)xy_topLeft[0], (int)xy_topLeft[1]), 1, new Scalar(0,255,0), 3, 8, 0 );
+         */
+
         //座標のLogを出力、
         Print_AR(corners, markerIds);
 
