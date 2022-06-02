@@ -4,6 +4,7 @@
 
         import jp.jaxa.iss.kibo.rpc.api.KiboRpcService;
         import gov.nasa.arc.astrobee.Result;
+        import gov.nasa.arc.astrobee.Kinematics;
         import gov.nasa.arc.astrobee.types.Point;
         import gov.nasa.arc.astrobee.types.Quaternion;
 
@@ -83,6 +84,9 @@ public class YourService extends KiboRpcService {
         api.saveMatImage(image1, "image1.png");
 
 
+
+
+
         //試しに出力
         Print_AR(corners, markerIds);
         // take target1 snapshots
@@ -91,10 +95,17 @@ public class YourService extends KiboRpcService {
         api.laserControl(false);
         // move to a point wp1_From1to2
         MoveToWaypoint(wp2);
+        LoggingKinematics();
         // move to a point wp2_From1to2
         MoveToWaypoint(wp3);
+        LoggingKinematics();
         // move to a point Point2
         MoveToWaypoint(wp4);
+        LoggingKinematics();
+
+
+
+
         // get a camera image
         // image2 = gray image
         // image2_color = RGB image
@@ -200,7 +211,7 @@ public class YourService extends KiboRpcService {
                 min_radius = 0: Minimum radius to be detected. If unknown, put zero as default.
                 max_radius = 0: Maximum radius to be detected. If unknown, put zero as default.
         */
-        Imgproc.HoughCircles(image2, circles, Imgproc.HOUGH_GRADIENT, 1.0, image2.size().height/16, 100.0, 30.0, 10, 100);
+        Imgproc.HoughCircles(image2, circles, Imgproc.HOUGH_GRADIENT, 1.0, image2.size().height/16, 100.0, 30.0, 10, 50);
 
         int[] changed_circle_pos = new int[2];
         //画像に検出した円を描画
@@ -263,7 +274,25 @@ public class YourService extends KiboRpcService {
             relativeMoveToWrapper(fix_laser_pos[0], 0, fix_laser_pos[1], 0, 0, -0.707, 0.707);
         }
 
-        //画像の保存
+
+        // 中心との距離分の
+        // 移動前(image2)と移動後(image3)を画像で保存して比較する
+        Mat image3 = api.getMatNavCam();
+
+        //比較用に十字線を描画
+        int[] cam_size = {1280,960};
+        org.opencv.core.Point w_start = new org.opencv.core.Point(0,cam_size[1]/2);
+        org.opencv.core.Point w_end = new org.opencv.core.Point(cam_size[0],cam_size[1]/2);
+        org.opencv.core.Point h_start = new org.opencv.core.Point(cam_size[0]/2,0);
+        org.opencv.core.Point h_end = new org.opencv.core.Point(cam_size[0]/2,cam_size[1]);
+        Imgproc.line(image2, w_start, w_end, new Scalar(0,0,0), 3, 9, 0);
+        Imgproc.line(image2, h_start, h_end, new Scalar(0,0,0), 3, 9, 0);
+        Imgproc.line(image3, w_start, w_end, new Scalar(0,0,0), 3, 9, 0);
+        Imgproc.line(image3, h_start, h_end, new Scalar(0,0,0), 3, 9, 0);
+        api.saveMatImage(image2,"image2.png");
+        api.saveMatImage(image3,"image3.png");
+
+
 
         // irradiate the laser
         api.laserControl(true);
@@ -273,14 +302,17 @@ public class YourService extends KiboRpcService {
         api.laserControl(false);
         // move to a point wp1_From2toG
         MoveToWaypoint(wp5);
+        LoggingKinematics();
         // move to a point wp3_From2toG
         MoveToWaypoint(wp6);
+        LoggingKinematics();
         // move to a point Goal
         MoveToWaypoint(wp7);
+        LoggingKinematics();
 
         // send mission completion
         api.reportMissionCompletion();
-        api.saveMatImage(image2,"image2.png");
+//        api.saveMatImage(image2,"image2.png");
         Aruco.drawDetectedMarkers(image2_color, corners, markerIds);
         api.saveMatImage(image2_color, "image2_color.png");
         api.saveMatImage(image2, "image2_gray.png");
@@ -312,7 +344,16 @@ public class YourService extends KiboRpcService {
         final Point point = new Point(pos_x, pos_y, pos_z);
         final Quaternion quaternion = new Quaternion((float) qua_x, (float) qua_y,
                 (float) qua_z, (float) qua_w);
-        api.relativeMoveTo(point, quaternion, true);
+        Result result = api.relativeMoveTo(point, quaternion, true);
+
+        // 移動コマンドが正常動作しているかをStatus列挙型で出力 詳しくは下記URL
+        // https://github.com/nasa/astrobee_android/blob/a8560ab0270ac281d8eadeb48645f4224582985e/astrobee_api/api/src/main/java/gov/nasa/arc/astrobee/Result.java
+        if(result.hasSucceeded()){
+            String str = result.getStatus().toString();
+            Log.i(TAG, "[relativeMoveToWrapper]:"+str);
+        }else{
+            Log.w(TAG, " api.relativeMoveTo Error : result.hasSucceeded()=false");
+        }
     }
 
 
@@ -331,7 +372,7 @@ public class YourService extends KiboRpcService {
             if(result.hasSucceeded()){
                 break;
             }
-            Log.i(TAG, "move Failure, retry");
+            Log.w(TAG, "move Failure, retry");
         }
     }
 
@@ -369,6 +410,17 @@ public class YourService extends KiboRpcService {
         // 右下（一番遠い）のは配列の何番目かをreturn
         Log.i(TAG,"finish findBottomRight");
         return out;
+    }
+
+    private void LoggingKinematics(){
+        //Kinematics 試運転
+        Kinematics kinematics = api.getRobotKinematics();
+        Log.i(TAG, kinematics.getConfidence().toString());
+        Log.i(TAG, kinematics.getPosition().toString());
+        Log.i(TAG, kinematics.getOrientation().toString());
+        Log.i(TAG, kinematics.getLinearVelocity().toString());
+        Log.i(TAG, kinematics.getAngularVelocity().toString());
+        Log.i(TAG, kinematics.getLinearAcceleration().toString());
     }
 
 }
