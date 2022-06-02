@@ -412,15 +412,17 @@ public class YourService extends KiboRpcService {
         return out;
     }
 
+    // Kinematics Github
+    // https://github.com/nasa/astrobee_android/blob/a8560ab0270ac281d8eadeb48645f4224582985e/astrobee_api/api/src/main/java/gov/nasa/arc/astrobee/Kinematics.java
     private void LoggingKinematics(){
         //Kinematics 試運転
         Kinematics kinematics = api.getRobotKinematics();
         Log.i(TAG, kinematics.getConfidence().toString());
         Log.i(TAG, kinematics.getPosition().toString());
         Log.i(TAG, kinematics.getOrientation().toString());
-        Log.i(TAG, kinematics.getLinearVelocity().toString());
-        Log.i(TAG, kinematics.getAngularVelocity().toString());
-        Log.i(TAG, kinematics.getLinearAcceleration().toString());
+        Log.i(TAG, kinematics.getLinearVelocity().toString());      // 線速度
+        Log.i(TAG, kinematics.getAngularVelocity().toString());     // 角速度
+        Log.i(TAG, kinematics.getLinearAcceleration().toString());  // 加速度
     }
 
 }
