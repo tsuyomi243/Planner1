@@ -93,12 +93,15 @@ public class YourService extends KiboRpcService {
         api.takeTarget1Snapshot();
         // turn the laser off
         api.laserControl(false);
+
         // move to a point wp1_From1to2
         MoveToWaypoint(wp2);
         LoggingKinematics();
+
         // move to a point wp2_From1to2
         MoveToWaypoint(wp3);
         LoggingKinematics();
+
         // move to a point Point2
         MoveToWaypoint(wp4);
         LoggingKinematics();
@@ -415,14 +418,14 @@ public class YourService extends KiboRpcService {
     // Kinematics Github
     // https://github.com/nasa/astrobee_android/blob/a8560ab0270ac281d8eadeb48645f4224582985e/astrobee_api/api/src/main/java/gov/nasa/arc/astrobee/Kinematics.java
     private void LoggingKinematics(){
-        //Kinematics 試運転
+        //Kinematics no Log
         Kinematics kinematics = api.getRobotKinematics();
-        Log.i(TAG, kinematics.getConfidence().toString());
-        Log.i(TAG, kinematics.getPosition().toString());
-        Log.i(TAG, kinematics.getOrientation().toString());
-        Log.i(TAG, kinematics.getLinearVelocity().toString());      // 線速度
-        Log.i(TAG, kinematics.getAngularVelocity().toString());     // 角速度
-        Log.i(TAG, kinematics.getLinearAcceleration().toString());  // 加速度
+        Log.i(TAG, "[LoggingKinematics]: 状態" + kinematics.getConfidence().toString());
+        Log.i(TAG, "[LoggingKinematics]: 絶対座標" + kinematics.getPosition().toString());
+        Log.i(TAG, "[LoggingKinematics]: 方向座標" + kinematics.getOrientation().toString());
+        Log.i(TAG, "[LoggingKinematics]: 線速度" + kinematics.getLinearVelocity().toString());      // 線速度
+        Log.i(TAG, "[LoggingKinematics]: 角速度" + kinematics.getAngularVelocity().toString());     // 角速度
+        Log.i(TAG, "[LoggingKinematics]: 加速度" + kinematics.getLinearAcceleration().toString());  // 加速度
     }
 
 }
