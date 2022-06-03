@@ -273,31 +273,11 @@ public class YourService extends KiboRpcService {
 
         double fix_distance = Math.sqrt(fix_laser_pos[0]*fix_laser_pos[0] + fix_laser_pos[1]*fix_laser_pos[1]);
          Log.i(TAG,String.valueOf(fix_distance));
+
         //誤検出による破綻防止
         if(fix_distance < 0.05){
-            // 試しにやってみる
-            double min_movement_val = 0.051;
-            if(fix_laser_pos[0] > 0 && fix_laser_pos[1] > 0){
-                // 第1象限
-                relativeMoveToWrapper(fix_laser_pos[0]-min_movement_val,0,fix_laser_pos[1]-min_movement_val,
-                                            0, 0, -0.707, 0.707);
-            }else if(fix_laser_pos[0] < 0 && fix_laser_pos[1] > 0){
-                // 第2象限
-                relativeMoveToWrapper(fix_laser_pos[0]+min_movement_val,0,fix_laser_pos[1]-min_movement_val,
-                                            0, 0, -0.707, 0.707);
-            }else if(fix_laser_pos[0] < 0 && fix_laser_pos[1] < 0){
-                // 第3象限
-                relativeMoveToWrapper(fix_laser_pos[0]+min_movement_val,0,fix_laser_pos[1]+min_movement_val,
-                                            0, 0, -0.707, 0.707);
-            }else if(fix_laser_pos[0] > 0 && fix_laser_pos[1] < 0){
-                // 第4象限
-                relativeMoveToWrapper(fix_laser_pos[0]-min_movement_val,0,fix_laser_pos[1]+min_movement_val,
-                                            0, 0, -0.707, 0.707);
-            }else{
-                Log.i(TAG,"第1象限でも第2象限でも第3象限でも第4象限でもありません！！！！！レ！！！！！！");
-            }
-        }else{
-            relativeMoveToWrapper(fix_laser_pos[0],0,fix_laser_pos[1],0, 0, -0.707, 0.707);
+            relativeMoveToWrapper(0.10,0,0.10,0,0,-0.707,0.707);
+            relativeMoveToWrapper(fix_laser_pos[0]-0.10,0,fix_laser_pos[1]-0.10,0, 0, -0.707, 0.707);
         }
 
         LoggingKinematics();
