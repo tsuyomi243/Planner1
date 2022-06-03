@@ -253,7 +253,7 @@ public class YourService extends KiboRpcService {
         Imgproc.circle(image2_color, center_fixed, 1, new Scalar(0,255,255), 1, 8, 0 );
         Imgproc.circle(image2_color, center_fixed, 30, new Scalar(0,255,255), 3, 8, 0 );
 
-
+        LoggingKinematics();
 
 
         //レーザ位置修正(相対移動)
@@ -272,9 +272,11 @@ public class YourService extends KiboRpcService {
         Log.i(TAG, "修正量 : "+ fix_laser_pos[0] +", y : "+ fix_laser_pos[1]);
 
         double fix_distance = Math.sqrt(fix_laser_pos[0]*fix_laser_pos[0] + fix_laser_pos[1]*fix_laser_pos[1]);
+         Log.i(TAG,String.valueOf(fix_distance));
         //誤検出による破綻防止
         if(fix_distance < 0.05){
-            relativeMoveToWrapper(fix_laser_pos[0], 0, fix_laser_pos[1], 0, 0, -0.707, 0.707);
+            // 試しにやってみる
+            moveToWrapper(11.204 - fix_laser_pos[0], -9.92, 5.47 - fix_laser_pos[1], 0, 0, -0.707, 0.707);
         }
 
 
@@ -282,7 +284,7 @@ public class YourService extends KiboRpcService {
         // 移動前(image2)と移動後(image3)を画像で保存して比較する
         Mat image3 = api.getMatNavCam();
 
-        //比較用に十字線を描画
+        // 比較用に十字線を描画
         int[] cam_size = {1280,960};
         org.opencv.core.Point w_start = new org.opencv.core.Point(0,cam_size[1]/2);
         org.opencv.core.Point w_end = new org.opencv.core.Point(cam_size[0],cam_size[1]/2);
@@ -295,7 +297,7 @@ public class YourService extends KiboRpcService {
         api.saveMatImage(image2,"image2.png");
         api.saveMatImage(image3,"image3.png");
 
-
+        LoggingKinematics();
 
         // irradiate the laser
         api.laserControl(true);
