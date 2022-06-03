@@ -276,8 +276,9 @@ public class YourService extends KiboRpcService {
 
         //誤検出による破綻防止
         if(fix_distance < 0.05){
+            //一回，xとzを0.10だけ動かしてから移動させる
             relativeMoveToWrapper(0.10,0,0.10,0,0,-0.707,0.707);
-            relativeMoveToWrapper(fix_laser_pos[0]-0.10,0,fix_laser_pos[1]-0.10,0, 0, -0.707, 0.707);
+            relativeMoveToWrapper(-fix_laser_pos[0]-0.10,0,-fix_laser_pos[1]-0.10,0, 0, -0.707, 0.707);
         }
 
         LoggingKinematics();
