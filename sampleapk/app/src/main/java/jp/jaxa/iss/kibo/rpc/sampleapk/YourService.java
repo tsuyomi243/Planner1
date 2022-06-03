@@ -276,9 +276,14 @@ public class YourService extends KiboRpcService {
 
         //誤検出による破綻防止
         if(fix_distance < 0.05){
-            //一回，xとzを0.10ずらしてから移動する．
-            relativeMoveToWrapper(0.10,0,0.10,0,0,-0.707,0.707);
-            relativeMoveToWrapper(-fix_laser_pos[0]-0.10,0,-fix_laser_pos[1]-0.10,0, 0, -0.707, 0.707);
+            //最小の移動距離が0.05であるため，xとzを0.10ずらず．
+            wp4.posX = wp4.posX + 0.10;
+            wp4.posZ = wp4.posZ + 0.10;
+            MoveToWaypoint(wp4);
+            //ずらした分と補正分だけ動かす
+            wp4.posX = wp4.posX - 0.10 - fix_laser_pos[0];
+            wp4.posZ = wp4.posZ - 0.10 - fix_laser_pos[1];
+            MoveToWaypoint(wp4);
         }
 
         LoggingKinematics();
