@@ -269,16 +269,17 @@ public class YourService extends KiboRpcService {
 
         fix_laser_pos[0] = (fixed_circle_pos[0] - changed_circle_pos[0])*distance_per_pixel;
         fix_laser_pos[1] = (fixed_circle_pos[1] - changed_circle_pos[1])*distance_per_pixel;
-        Log.i(TAG, "修正量 : "+ fix_laser_pos[0] +", y : "+ fix_laser_pos[1]);
+        Log.i(TAG, "修正量 x : "+ fix_laser_pos[0] +", y : "+ fix_laser_pos[1]);
 
         double fix_distance = Math.sqrt(fix_laser_pos[0]*fix_laser_pos[0] + fix_laser_pos[1]*fix_laser_pos[1]);
          Log.i(TAG,String.valueOf(fix_distance));
         //誤検出による破綻防止
         if(fix_distance < 0.05){
             // 試しにやってみる
-            moveToWrapper(11.204 - fix_laser_pos[0], -9.92, 5.47 - fix_laser_pos[1], 0, 0, -0.707, 0.707);
+//            moveToWrapper(11.204 - fix_laser_pos[0], -9.92, 5.47 - fix_laser_pos[1], 0, 0, -0.707, 0.707);
         }
-
+        relativeMoveToWrapper(0,0,0.051,0, 0, -0.707, 0.707);
+        LoggingKinematics();
 
         // 中心との距離分の
         // 移動前(image2)と移動後(image3)を画像で保存して比較する
@@ -299,12 +300,19 @@ public class YourService extends KiboRpcService {
 
         LoggingKinematics();
 
+
+
         // irradiate the laser
         api.laserControl(true);
+        LoggingKinematics();
         // take target1 snapshots
+        Mat image4 = api.getMatNavCam();
+        api.saveMatImage(image4,"image4.png");
         api.takeTarget2Snapshot();
+        LoggingKinematics();
         // turn the laser off
         api.laserControl(false);
+        LoggingKinematics();
         // move to a point wp1_From2toG
         MoveToWaypoint(wp5);
         LoggingKinematics();
@@ -337,7 +345,7 @@ public class YourService extends KiboRpcService {
     private void moveToWrapper(double pos_x, double pos_y, double pos_z,
                                double qua_x, double qua_y, double qua_z,
                                double qua_w){
-        final Point point = new Point(pos_x, pos_y, pos_z);
+        final Point point = new Point((float)pos_x, (float)pos_y, (float)pos_z);
         final Quaternion quaternion = new Quaternion((float)qua_x, (float)qua_y,
                 (float)qua_z, (float)qua_w);
         api.moveTo(point, quaternion, true);
@@ -346,7 +354,7 @@ public class YourService extends KiboRpcService {
     private void relativeMoveToWrapper(double pos_x, double pos_y, double pos_z,
                                        double qua_x, double qua_y, double qua_z,
                                        double qua_w) {
-        final Point point = new Point(pos_x, pos_y, pos_z);
+        final Point point = new Point((float)pos_x, (float)pos_y, (float)pos_z);
         final Quaternion quaternion = new Quaternion((float) qua_x, (float) qua_y,
                 (float) qua_z, (float) qua_w);
         Result result = api.relativeMoveTo(point, quaternion, true);
@@ -368,8 +376,15 @@ public class YourService extends KiboRpcService {
 
         int count = 0;
         while(count < LOOP_MAX){
-            final Point point = new Point(name.posX + name.avoidX*count, name.posY + name.avoidY*count, name.posZ + name.avoidZ*count);
-            final Quaternion quaternion = new Quaternion((float)name.quaX, (float)name.quaY, (float)name.quaZ, (float)name.quaW);
+            final Point point = new Point(
+                    (float)(name.posX + name.avoidX*count),
+                    (float)(name.posY + name.avoidY*count),
+                    (float)(name.posZ + name.avoidZ*count)  );
+            final Quaternion quaternion = new Quaternion(
+                    (float)name.quaX,
+                    (float)name.quaY,
+                    (float)name.quaZ,
+                    (float)name.quaW    );
             
             Result result = api.moveTo(point, quaternion, true);
             ++count;
