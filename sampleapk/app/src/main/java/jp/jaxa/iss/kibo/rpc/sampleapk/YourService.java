@@ -106,6 +106,9 @@ public class YourService extends KiboRpcService {
         MoveToWaypoint(wp4);
         LoggingKinematics();
 
+        // irradiate the laser (NavCamは常に写真を取得しているのではなく定期的に画像を更新しているみたいで，ap.Nac)
+        api.laserControl(true);
+        LoggingKinematics();
 
 
 
@@ -113,6 +116,7 @@ public class YourService extends KiboRpcService {
         // image2 = gray image
         // image2_color = RGB image
         Mat image2 = api.getMatNavCam();
+        api.saveMatImage(image2,"image2.png");
         Mat image2_color = new Mat();
         Imgproc.cvtColor(image2, image2_color, Imgproc.COLOR_GRAY2RGB);
 
@@ -290,6 +294,7 @@ public class YourService extends KiboRpcService {
         // 中心との距離分の
         // 移動前(image2)と移動後(image3)を画像で保存して比較する
         Mat image3 = api.getMatNavCam();
+        api.saveMatImage(image3,"image3.png");
 /*
         // 比較用に十字線を描画
         int[] cam_size = {1280,960};
@@ -308,23 +313,21 @@ public class YourService extends KiboRpcService {
 */
         // レーザー位置の評価用に十字線を描画
         int[] cam_size = {1280,960};
-        org.opencv.core.Point w_start = new org.opencv.core.Point(0,cam_size[1]/2);
-        org.opencv.core.Point w_end = new org.opencv.core.Point(cam_size[0],cam_size[1]/2);
-        org.opencv.core.Point h_start = new org.opencv.core.Point(cam_size[0]/2,0);
-        org.opencv.core.Point h_end = new org.opencv.core.Point(cam_size[0]/2,cam_size[1]);
-        Imgproc.line(image2, w_start, w_end, new Scalar(0,0,0), 3, 9, 0);
-        Imgproc.line(image2, h_start, h_end, new Scalar(0,0,0), 3, 9, 0);
-        Imgproc.line(image3, w_start, w_end, new Scalar(0,0,0), 3, 9, 0);
-        Imgproc.line(image3, h_start, h_end, new Scalar(0,0,0), 3, 9, 0);
+        int[] laser_hit_point = {718,526};
+        org.opencv.core.Point w_start = new org.opencv.core.Point(0,laser_hit_point[1]);
+        org.opencv.core.Point w_end = new org.opencv.core.Point(cam_size[0],laser_hit_point[1]);
+        org.opencv.core.Point h_start = new org.opencv.core.Point(laser_hit_point[0],0);
+        org.opencv.core.Point h_end = new org.opencv.core.Point(laser_hit_point[0],cam_size[1]);
+        Imgproc.line(image2, w_start, w_end, new Scalar(0,0,0), 2, 9, 0);
+        Imgproc.line(image2, h_start, h_end, new Scalar(0,0,0), 2, 9, 0);
+        Imgproc.line(image3, w_start, w_end, new Scalar(0,0,0), 2, 9, 0);
+        Imgproc.line(image3, h_start, h_end, new Scalar(0,0,0), 2, 9, 0);
         api.saveMatImage(image2,"image2.png");
         api.saveMatImage(image3,"image3.png");
 
         LoggingKinematics();
 
 
-        // irradiate the laser
-        api.laserControl(true);
-        LoggingKinematics();
         // take target1 snapshots
         Mat image4 = api.getMatNavCam();
         api.saveMatImage(image4,"image4.png");
