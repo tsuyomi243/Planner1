@@ -10,7 +10,10 @@
 
         import org.opencv.aruco.Aruco;
         import org.opencv.aruco.Dictionary;
+        import org.opencv.core.CvType;
         import org.opencv.core.Mat;
+        import org.opencv.core.Rect;
+        import org.opencv.core.Scalar;
 
         import org.opencv.core.MatOfDouble;
 
@@ -60,6 +63,14 @@ public class YourService extends KiboRpcService {
 
         //マーカの設定
         Dictionary dictionary = Aruco.getPredefinedDictionary(Aruco.DICT_5X5_250);
+
+        //NaVCamのカメラ行列と歪み係数の取得
+        double[][] NavCamIntrinsics = api.getNavCamIntrinsics();
+        Mat cameraMatrix = new Mat(3,3,CvType.CV_32FC1);
+        cameraMatrix.put(0,0,NavCamIntrinsics[0]);
+        Mat distortionCoefficients = new Mat();
+        distortionCoefficients.put(0,0,NavCamIntrinsics[1]);
+
         //ログを取るため
         Log.i(TAG, "start mission");
         // the mission starts
@@ -106,13 +117,11 @@ public class YourService extends KiboRpcService {
         MoveToWaypoint(wp4);
         LoggingKinematics();
 
-
-
-
         // get a camera image
         // image2 = gray image
         // image2_color = RGB image
-        Mat image2 = api.getMatNavCam();
+        Mat image2 = new Mat();
+        Imgproc.undistort(api.getMatNavCam(),image2,cameraMatrix,distortionCoefficients); //api.getMatNavCam()の画像の歪みを補正しま
         Mat image2_color = new Mat();
         Imgproc.cvtColor(image2, image2_color, Imgproc.COLOR_GRAY2RGB);
 
@@ -313,7 +322,8 @@ public class YourService extends KiboRpcService {
         api.laserControl(true);
         LoggingKinematics();
         // take target1 snapshots
-        Mat image4 = api.getMatNavCam();
+        Mat image4 = new Mat();
+        Imgproc.undistort(api.getMatNavCam(),image4,cameraMatrix,distortionCoefficients);
         api.saveMatImage(image4,"image4.png");
         api.takeTarget2Snapshot();
         LoggingKinematics();
