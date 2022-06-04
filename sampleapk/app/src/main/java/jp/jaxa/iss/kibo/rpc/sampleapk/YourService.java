@@ -273,7 +273,7 @@ public class YourService extends KiboRpcService {
 
         double fix_distance = Math.sqrt(fix_laser_pos[0]*fix_laser_pos[0] + fix_laser_pos[1]*fix_laser_pos[1]);
          Log.i(TAG,String.valueOf(fix_distance));
-
+/*
         //誤検出による破綻防止
         if(fix_distance < 0.05){
             //最小の移動距離が0.05であるため，xとzを0.10ずらず．
@@ -307,7 +307,7 @@ public class YourService extends KiboRpcService {
 
         LoggingKinematics();
 
-
+*/
 
         // irradiate the laser
         api.laserControl(true);
