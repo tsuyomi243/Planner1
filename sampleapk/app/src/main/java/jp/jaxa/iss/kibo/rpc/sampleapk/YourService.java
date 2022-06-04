@@ -34,7 +34,7 @@ public class YourService extends KiboRpcService {
         // set Waypoint value
         // Write Position and Quaternion here.
         // Waypoint(pos_x, pos_y, pos_z, qua_x, qua_y, qua_z, qua_w, avoidX, avoidY, avoidZ)
-        //X : right,left Y : back, front Z : down,up
+        // X : right,left Y : back, front Z : down,up
         Waypoint wp1 = new Waypoint(10.71, -7.77, 4.48,
                                     0, 0.707, 0, 0.707,
                                     0, 0, 0.05);    // Point1
@@ -256,18 +256,20 @@ public class YourService extends KiboRpcService {
         LoggingKinematics();
 
 
-        //レーザ位置修正(相対移動)
+        // レーザ位置修正(相対移動)
         Log.i(TAG, "レーザ位置修正移動");
         double[] fix_laser_pos = new double[2];
         double[] AR12_center = new double[2];
         AR12_center[0] = ((int)xy_topLeft[0]+(int)AR12_bottomright[0])/2;
         AR12_center[1] = ((int)xy_topLeft[1]+(int)AR12_bottomright[1])/2;
-        //debug
+        // debug
         Log.i(TAG, "AR12 中心座標 x : "+ (int)AR12_center[0] +", y : "+ (int)AR12_center[1]);
         Imgproc.circle(image2_color, new org.opencv.core.Point((int)AR12_center[0], (int)AR12_center[1]), 2, new Scalar(255,0,255), 3, 8, 0 );
         final double distance_per_pixel = 0.1125/(fixed_circle_pos[0]-AR12_center[0]); //[m/pix]
 
-        fix_laser_pos[0] = (fixed_circle_pos[0] - changed_circle_pos[0])*distance_per_pixel;
+        // 画像は右下座標系なのに対して、Astrobeeの移動は左上座標系なので(伝われ)
+        // fix_laser_pos[0] に-1を掛ける
+        fix_laser_pos[0] = -(fixed_circle_pos[0] - changed_circle_pos[0])*distance_per_pixel;
         fix_laser_pos[1] = (fixed_circle_pos[1] - changed_circle_pos[1])*distance_per_pixel;
         Log.i(TAG, "修正量 x : "+ fix_laser_pos[0] +", y : "+ fix_laser_pos[1]);
 
@@ -277,28 +279,71 @@ public class YourService extends KiboRpcService {
         if(fix_distance < 0.05){
             // 試しにやってみる
             double min_movement_val = 0.051;
+            //  ここでの象限は、 fixedの中心からみたマーカー円の中心の方向である
             if(fix_laser_pos[0] > 0 && fix_laser_pos[1] > 0){
                 // 第1象限
-                relativeMoveToWrapper(fix_laser_pos[0]-min_movement_val,0,fix_laser_pos[1]-min_movement_val,
-                                            0, 0, -0.707, 0.707);
+                moveToWrapper(11.204-min_movement_val, -9.92, 5.47-min_movement_val,0, 0, -0.707, 0.707);
+                moveToWrapper(11.204+fix_laser_pos[0], -9.92, 5.47+fix_laser_pos[1],0, 0, -0.707, 0.707);
+                Log.i(TAG,"第1象限");
             }else if(fix_laser_pos[0] < 0 && fix_laser_pos[1] > 0){
                 // 第2象限
-                relativeMoveToWrapper(fix_laser_pos[0]+min_movement_val,0,fix_laser_pos[1]-min_movement_val,
-                                            0, 0, -0.707, 0.707);
+                moveToWrapper(11.204+min_movement_val, -9.92, 5.47-min_movement_val,0, 0, -0.707, 0.707);
+                moveToWrapper(11.204+fix_laser_pos[0], -9.92, 5.47+fix_laser_pos[1],0, 0, -0.707, 0.707);
+                Log.i(TAG,"第2象限");
             }else if(fix_laser_pos[0] < 0 && fix_laser_pos[1] < 0){
                 // 第3象限
-                relativeMoveToWrapper(fix_laser_pos[0]+min_movement_val,0,fix_laser_pos[1]+min_movement_val,
-                                            0, 0, -0.707, 0.707);
+                moveToWrapper(11.204-min_movement_val, -9.92, 5.47-min_movement_val,0, 0, -0.707, 0.707);
+                moveToWrapper(11.204+fix_laser_pos[0], -9.92, 5.47+fix_laser_pos[1],0, 0, -0.707, 0.707);
+                Log.i(TAG,"第3象限");
             }else if(fix_laser_pos[0] > 0 && fix_laser_pos[1] < 0){
                 // 第4象限
+                moveToWrapper(11.204-min_movement_val, -9.92, 5.47+min_movement_val,0, 0, -0.707, 0.707);
+                moveToWrapper(11.204+fix_laser_pos[0], -9.92, 5.47+fix_laser_pos[1],0, 0, -0.707, 0.707);
+                Log.i(TAG,"第4象限");
+            }else{
+                Log.i(TAG,"第1象限でも第2象限でも第3象限でも第4象限でもありません！！！！！レ！！！！！！");
+            }
+        }else{
+            moveToWrapper(11.204, -9.92, 5.47,0, 0, -0.707, 0.707);
+        }
+
+            /*
+
+            相対だと上手くいかない説があるので、コメント化
+
+            //  ここでの象限は、 fixedの中心からみたマーカー円の中心の方向である
+            if(fix_laser_pos[0] > 0 && fix_laser_pos[1] > 0){
+                // 第1象限
+                relativeMoveToWrapper(-min_movement_val,0,-min_movement_val,0, 0, -0.707, 0.707);
+                relativeMoveToWrapper(fix_laser_pos[0]+min_movement_val,0,fix_laser_pos[1]+min_movement_val,
+                        0, 0, -0.707, 0.707);
+                Log.i(TAG,"第1象限");
+            }else if(fix_laser_pos[0] < 0 && fix_laser_pos[1] > 0){
+                // 第2象限
+                relativeMoveToWrapper(min_movement_val,0,-min_movement_val,0, 0, -0.707, 0.707);
                 relativeMoveToWrapper(fix_laser_pos[0]-min_movement_val,0,fix_laser_pos[1]+min_movement_val,
-                                            0, 0, -0.707, 0.707);
+                        0, 0, -0.707, 0.707);
+                Log.i(TAG,"第2象限");
+            }else if(fix_laser_pos[0] < 0 && fix_laser_pos[1] < 0){
+                // 第3象限
+                relativeMoveToWrapper(min_movement_val,0,min_movement_val,0, 0, -0.707, 0.707);
+                relativeMoveToWrapper(fix_laser_pos[0]-min_movement_val,0,fix_laser_pos[1]-min_movement_val,
+                        0, 0, -0.707, 0.707);
+                Log.i(TAG,"第3象限");
+            }else if(fix_laser_pos[0] > 0 && fix_laser_pos[1] < 0){
+                // 第4象限
+                relativeMoveToWrapper(-min_movement_val,0,min_movement_val,0, 0, -0.707, 0.707);
+                relativeMoveToWrapper(fix_laser_pos[0]+min_movement_val,0,fix_laser_pos[1]-min_movement_val,
+                        0, 0, -0.707, 0.707);
+                Log.i(TAG,"第4象限");
             }else{
                 Log.i(TAG,"第1象限でも第2象限でも第3象限でも第4象限でもありません！！！！！レ！！！！！！");
             }
         }else{
             relativeMoveToWrapper(fix_laser_pos[0],0,fix_laser_pos[1],0, 0, -0.707, 0.707);
         }
+        */
+
 
         LoggingKinematics();
 
