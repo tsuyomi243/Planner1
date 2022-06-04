@@ -94,10 +94,6 @@ public class YourService extends KiboRpcService {
         Aruco.drawDetectedMarkers(image1, corners, markerIds);
         api.saveMatImage(image1, "image1.png");
 
-
-
-
-
         //試しに出力
         Print_AR(corners, markerIds);
         // take target1 snapshots
@@ -121,7 +117,7 @@ public class YourService extends KiboRpcService {
         // image2 = gray image
         // image2_color = RGB image
         Mat image2 = new Mat();
-        Imgproc.undistort(api.getMatNavCam(),image2,cameraMatrix,distortionCoefficients); //api.getMatNavCam()の画像の歪みを補正しま
+        Imgproc.undistort(api.getMatNavCam(),image2,cameraMatrix,distortionCoefficients); //api.getMatNavCam()の画像の歪みを補正します
         Mat image2_color = new Mat();
         Imgproc.cvtColor(image2, image2_color, Imgproc.COLOR_GRAY2RGB);
 
