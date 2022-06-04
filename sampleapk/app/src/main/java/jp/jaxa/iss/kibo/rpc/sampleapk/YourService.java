@@ -1,5 +1,4 @@
         package jp.jaxa.iss.kibo.rpc.sampleapk;
-
         import android.util.Log;
 
         import jp.jaxa.iss.kibo.rpc.api.KiboRpcService;
@@ -9,8 +8,10 @@
 
         import org.opencv.aruco.Aruco;
         import org.opencv.aruco.Dictionary;
+        import org.opencv.core.CvType;
         import org.opencv.core.Mat;
-
+        import org.opencv.core.Rect;
+        import org.opencv.core.Scalar;
         import org.opencv.core.MatOfDouble;
 
         import org.opencv.core.Scalar;
@@ -59,6 +60,13 @@ public class YourService extends KiboRpcService {
 
         //マーカの設定
         Dictionary dictionary = Aruco.getPredefinedDictionary(Aruco.DICT_5X5_250);
+        //NaVCamのカメラ行列と歪み係数の取得
+        double[][] NavCamIntrinsics = api.getNavCamIntrinsics();
+        Mat cameraMatrix = new Mat(3,3,CvType.CV_32FC1);
+        cameraMatrix.put(0,0,NavCamIntrinsics[0]);
+        Mat distortionCoefficients = new Mat();
+        distortionCoefficients.put(0,0,NavCamIntrinsics[1]);
+
         //ログを取るため
         Log.i(TAG, "start mission");
         // the mission starts
@@ -98,10 +106,13 @@ public class YourService extends KiboRpcService {
         // get a camera image
         // image2 = gray image
         // image2_color = RGB image
-        Mat image2 = api.getMatNavCam();
+        //Imgroc.undistort(input image,output image ,cameraMatrix,歪み係数)
+        Mat image2 = new Mat();
+        Imgproc.undistort(api.getMatNavCam(),image2,cameraMatrix,distortionCoefficients); //api.getMatNavCam()の画像の歪みを補正します
         Mat image2_color = new Mat();
         Imgproc.cvtColor(image2, image2_color, Imgproc.COLOR_GRAY2RGB);
 
+        api.saveMatImage(image2,"image2_undistort.png");
 
         //image2のマーカー検出
         Aruco.detectMarkers(image2, dictionary, corners, markerIds);
@@ -267,6 +278,10 @@ public class YourService extends KiboRpcService {
 
         // irradiate the laser
         api.laserControl(true);
+        Mat image3 = new Mat();
+        Imgproc.undistort(api.getMatNavCam(),image3,cameraMatrix,distortionCoefficients);
+        api.saveMatImage(image3, "image3.png");
+
         // take target1 snapshots
         api.takeTarget2Snapshot();
         // turn the laser off
