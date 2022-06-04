@@ -285,13 +285,12 @@ public class YourService extends KiboRpcService {
             wp4.posZ = wp4.posZ - 0.10 - fix_laser_pos[1];
             MoveToWaypoint(wp4);
         }
-
         LoggingKinematics();
 
         // 中心との距離分の
         // 移動前(image2)と移動後(image3)を画像で保存して比較する
         Mat image3 = api.getMatNavCam();
-
+/*
         // 比較用に十字線を描画
         int[] cam_size = {1280,960};
         org.opencv.core.Point w_start = new org.opencv.core.Point(0,cam_size[1]/2);
@@ -306,7 +305,21 @@ public class YourService extends KiboRpcService {
         api.saveMatImage(image3,"image3.png");
 
         LoggingKinematics();
+*/
+        // レーザー位置の評価用に十字線を描画
+        int[] cam_size = {1280,960};
+        org.opencv.core.Point w_start = new org.opencv.core.Point(0,cam_size[1]/2);
+        org.opencv.core.Point w_end = new org.opencv.core.Point(cam_size[0],cam_size[1]/2);
+        org.opencv.core.Point h_start = new org.opencv.core.Point(cam_size[0]/2,0);
+        org.opencv.core.Point h_end = new org.opencv.core.Point(cam_size[0]/2,cam_size[1]);
+        Imgproc.line(image2, w_start, w_end, new Scalar(0,0,0), 3, 9, 0);
+        Imgproc.line(image2, h_start, h_end, new Scalar(0,0,0), 3, 9, 0);
+        Imgproc.line(image3, w_start, w_end, new Scalar(0,0,0), 3, 9, 0);
+        Imgproc.line(image3, h_start, h_end, new Scalar(0,0,0), 3, 9, 0);
+        api.saveMatImage(image2,"image2.png");
+        api.saveMatImage(image3,"image3.png");
 
+        LoggingKinematics();
 
 
         // irradiate the laser
