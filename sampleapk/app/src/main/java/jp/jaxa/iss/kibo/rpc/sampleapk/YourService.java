@@ -118,14 +118,18 @@ public class YourService extends KiboRpcService {
         //Imgroc.undistort(input image,output image ,cameraMatrix,歪み係数)
         Mat image2 = new Mat();
         Mat image2_color = new Mat();
+        Mat image2_thresh = new Mat();
 
         // ごめん、ごちゃごちゃして分からないのでジャンプで無理やり解決します。
         int[] laser_position_px = {0,0};
-        CP1:for(int k=0; k<5; k++){
+        // for文のloop上限
+        final int FOR_LOOP = 5;
+        CP1:for(int k=0; k<FOR_LOOP; k++){
             Log.i(TAG,k+"週目");
 
             Imgproc.undistort(api.getMatNavCam(),image2,cameraMatrix,distortionCoefficients); //api.getMatNavCam()の画像の歪みを補正します
             Imgproc.cvtColor(image2, image2_color, Imgproc.COLOR_GRAY2RGB);
+            Imgproc.threshold(image2,image2_thresh,0,255,Imgproc.THRESH_BINARY | Imgproc.THRESH_OTSU);
 
 
             //image2のマーカー検出
@@ -196,7 +200,8 @@ public class YourService extends KiboRpcService {
                     min_radius = 0: Minimum radius to be detected. If unknown, put zero as default.
                     max_radius = 0: Maximum radius to be detected. If unknown, put zero as default.
             */
-            Imgproc.HoughCircles(image2, circles, Imgproc.HOUGH_GRADIENT, 1.0, image2.size().height/16, 100.0, 30.0, 10, 100);
+
+            Imgproc.HoughCircles(image2_thresh, circles, Imgproc.HOUGH_GRADIENT, 0.8, image2.size().height/16, 100.0, 30.0, 10, 100);
 
             int[] changed_circle_pos = new int[2];
             //画像に検出した円を描画
@@ -204,6 +209,13 @@ public class YourService extends KiboRpcService {
                 double[] c = circles.get(0, x);
 
                 Log.i(TAG, "中心座標候補 x : "+ (int)Math.round(c[0]) +", y : "+ (int)Math.round(c[1]));
+
+                // 2値化のデバッグ用コード
+                org.opencv.core.Point center2 = new org.opencv.core.Point(Math.round(c[0]), Math.round(c[1]));
+                Imgproc.circle(image2, center2, 1, new Scalar(255,0,0), 3, 8, 0 );
+                int radius2 = (int) Math.round(c[2]);
+                Imgproc.circle(image2, center2, radius2, new Scalar(0,255,0), 3, 8, 0 );
+
                 //AR marker外の円を除去
                 //x
                 if((int)Math.round(c[0]) > (int)xy_topLeft[0] && (int)Math.round(c[0]) < (int)xy_bottomRight[0]){
@@ -277,9 +289,11 @@ public class YourService extends KiboRpcService {
 
             api.saveMatImage(image2_color,"image2_color"+k+".png");
 
-            if(fix_distance < 0.002){
+            // loop 終了条件
+            if(fix_distance < 0.01 || k == FOR_LOOP){
                 break CP1;
             }
+
 
             //誤検出による破綻防止
             if(fix_distance < 0.05){
@@ -327,6 +341,7 @@ public class YourService extends KiboRpcService {
         Aruco.drawDetectedMarkers(image2_color, corners, markerIds);
         api.saveMatImage(image2_color, "image2_color.png");
         api.saveMatImage(image2, "image2_gray.png");
+        api.saveMatImage(image2_thresh, "image2_thresh.png");
     }
 
     @Override
