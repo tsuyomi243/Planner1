@@ -235,7 +235,7 @@ public class YourService extends KiboRpcService {
                 }
             }
 
-            final int[] circle_deviation = {3,-11};
+            final int[] circle_deviation = {0,0};
             final int[] fixed_circle_pos = {((int)xy_topLeft[0]+(int)xy_bottomRight[0])/2+circle_deviation[0],
                     ((int)xy_topLeft[1]+(int)xy_bottomRight[1])/2+circle_deviation[1]};
 
@@ -290,7 +290,7 @@ public class YourService extends KiboRpcService {
             api.saveMatImage(image2_color,"image2_color"+k+".png");
 
             // loop 終了条件
-            if(fix_distance < 0.01 || k == FOR_LOOP){
+            if(fix_distance < 0.005 || k == FOR_LOOP){
                 break CP1;
             }
 
