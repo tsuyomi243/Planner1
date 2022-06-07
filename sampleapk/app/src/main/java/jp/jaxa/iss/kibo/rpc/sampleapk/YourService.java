@@ -317,7 +317,7 @@ public class YourService extends KiboRpcService {
             api.saveMatImage(image2_color,"image2_color"+k+".png");
 
             // loop 終了条件
-            if(fix_distance < 0.0035 || k == FOR_LOOP){
+            if(fix_distance < 0.002 || k == FOR_LOOP){
                 break CP1;
             }
 
