@@ -290,8 +290,10 @@ public class YourService extends KiboRpcService {
             // 最初のfixedの円の中心を記憶する
             // laser_position_px のローカル宣言は、for文の前に書きます！！！！！ごめん
             if(k==0){
-                laser_position_px[0] = fixed_circle_pos[0];
-                laser_position_px[1] = fixed_circle_pos[1];
+//                laser_position_px[0] = fixed_circle_pos[0];
+//                laser_position_px[1] = fixed_circle_pos[1];
+                laser_position_px[0] = 734;
+                laser_position_px[1] = 453;
             }
             Log.i(TAG,"laser_position_px = "+laser_position_px[0]+","+laser_position_px[1]);
             // Fixed の Target2 を画像上に表示
