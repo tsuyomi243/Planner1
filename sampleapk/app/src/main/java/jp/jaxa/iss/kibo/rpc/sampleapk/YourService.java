@@ -240,8 +240,8 @@ public class YourService extends KiboRpcService {
             fixed_center_movement_y[1] = fixed_circle_pos[1] + (int)(0.05/distance_per_pixel);
 
             Imgproc.rectangle(image2_color,
-                    new org.opencv.core.Point(fixed_center_movement_x[0],fixed_center_movement_x[1]),
-                    new org.opencv.core.Point(fixed_center_movement_y[0],fixed_center_movement_y[1]),
+                    new org.opencv.core.Point(fixed_center_movement_x[0],fixed_center_movement_y[0]),
+                    new org.opencv.core.Point(fixed_center_movement_x[1],fixed_center_movement_y[1]),
                     new Scalar(0,255,255)
             );
 
@@ -315,7 +315,7 @@ public class YourService extends KiboRpcService {
             api.saveMatImage(image2_color,"image2_color"+k+".png");
 
             // loop 終了条件
-            if(fix_distance < 0.002 || k == FOR_LOOP){
+            if(fix_distance < 0.0035 || k == FOR_LOOP){
                 break CP1;
             }
 
